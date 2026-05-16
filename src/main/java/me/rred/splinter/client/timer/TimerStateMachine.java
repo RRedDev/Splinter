@@ -1,7 +1,6 @@
 package me.rred.splinter.client.timer;
 
 import me.rred.splinter.Splinter;
-import net.minecraft.block.Block;
 import net.minecraft.util.math.BlockPos;
 
 public class TimerStateMachine {
@@ -16,6 +15,8 @@ public class TimerStateMachine {
     private BlockPos startPos = null;
     private BlockPos endPos = null;
 
+    private SplinterTimer timer = new SplinterTimer();
+
     public BlockPos getStartPos() {
         return startPos;
     }
@@ -24,10 +25,23 @@ public class TimerStateMachine {
         return endPos;
     }
 
+    public void logTime() {
+
+        Splinter.LOGGER.info("time: {}", timer.fetchElapsedTime());
+    }
+
     public void onClear() {
         currState = State.IDLE;
         startPos = null;
         endPos = null;
+        timer.clear();
+    }
+
+    public void onStop() {
+        currState = State.IDLE;
+        startPos = null;
+        endPos = null;
+        timer.stop();
     }
 
     public void onBlockSelected(BlockPos pos) {
@@ -65,6 +79,7 @@ public class TimerStateMachine {
             case TWO_SELECTED -> {
                 if (pos.equals(startPos)) {
                     Splinter.LOGGER.info("start timer! (2block start broken)");
+                    timer.start();
                     currState = State.RUNNING;
                     startPos = null;
                 } else if (pos.equals(endPos)) {
@@ -74,11 +89,28 @@ public class TimerStateMachine {
             }
             case RUNNING -> {
                 if (pos.equals(endPos)) {
-                    Splinter.LOGGER.info("clear timer! (2block end broken)");
-                    onClear();
+                    Splinter.LOGGER.info("stop timer! (2block end broken)");
+                    onStop();
                 }
             }
+        }
+    }
 
+    public void toggleTimer() {
+        switch (currState) {
+            case IDLE -> {
+                timer.start();
+                currState = State.RUNNING;
+            }
+            case ONE_SELECTED, TWO_SELECTED -> {
+                startPos = null;
+                endPos = null;
+                timer.start();
+                currState = State.RUNNING;
+            }
+            case RUNNING -> {
+                onStop();
+            }
         }
     }
 }
