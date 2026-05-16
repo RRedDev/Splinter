@@ -68,8 +68,25 @@ public class BlockOutlineRenderer {
         disableTransparency();
     }
 
+    /*
+    public void render() {
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder buffer = tessellator.getBuffer();
+
+        GlStateManager.lineWidth(5.0f);
+        buffer.begin(1, VertexFormats.POSITION_COLOR);
+
+        // Draw a single hardcoded line at world origin
+        Vec3d cam = MinecraftClient.getInstance().gameRenderer.getCamera().getPos();
+        buffer.vertex(0 - cam.x, 65 - cam.y, 0 - cam.z).color(255, 0, 0, 255).next();
+        buffer.vertex(10 - cam.x, 65 - cam.y, 0 - cam.z).color(255, 0, 0, 255).next();
+
+        tessellator.draw();
+    }
+    */
+
     private Vec3d blockToVec(@NotNull BlockPos pos) {
-        return new Vec3d(pos.getX(), pos.getY(), pos.getZ());
+        return new Vec3d(pos.getX(), pos.getY(), pos.getZ()).add(0.5, 0.5, 0.5);
     }
 
     private void addVertex(@NotNull BufferBuilder buffer, @NotNull Vec3d pos, Color color) {

@@ -14,6 +14,9 @@
 	"entrypoints": {
 		"main": [
 			"me.rred.splinter.Splinter"
+		],
+		"client": [
+			"me.rred.splinter.client.SplinterClient"
 		]
 	},
 	"mixins": [

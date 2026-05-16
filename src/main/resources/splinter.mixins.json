@@ -3,7 +3,7 @@
 	"package": "me.rred.splinter.mixin",
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [
-		"ExampleMixin"
+		"GameRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
