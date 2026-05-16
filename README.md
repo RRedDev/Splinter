@@ -1,9 +1,5 @@
 # splinter
+This mod records splits between different events to compare micro
+time differences in bastion routing.
 
-## Setup
-
-For setup instructions, please see the [Fabric Documentation page](https://docs.fabricmc.net/develop/getting-started/creating-a-project#setting-up) related to the IDE that you are using.
-
-## License
-
-This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.
+Each split will fall into a set that you can aggregate and compare to different sets

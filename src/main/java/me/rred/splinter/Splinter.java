@@ -1,4 +1,4 @@
-package me.rred;
+package me.rred.splinter;
 
 import net.fabricmc.api.ModInitializer;
 

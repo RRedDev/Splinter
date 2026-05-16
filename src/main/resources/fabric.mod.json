@@ -3,20 +3,17 @@
 	"id": "splinter",
 	"version": "${version}",
 	"name": "splinter",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "",
 	"authors": [
-		"Me!"
+		"RRed"
 	],
-	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
-	},
-	"license": "CC0-1.0",
+	"contact": {},
+	"license": "",
 	"icon": "assets/splinter/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"me.rred.Splinter"
+			"me.rred.splinter.Splinter"
 		]
 	},
 	"mixins": [
