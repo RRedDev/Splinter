@@ -26,8 +26,15 @@ public class TimerStateMachine {
     }
 
     public void logTime() {
-
         Splinter.LOGGER.info("time: {}", timer.fetchElapsedTime());
+    }
+
+    public long getElapsedMs() {
+        return timer.fetchElapsedTime();
+    }
+
+    public boolean isActive() {
+        return (currState == State.RUNNING);
     }
 
     public void onClear() {

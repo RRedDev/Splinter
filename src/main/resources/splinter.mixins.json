@@ -4,7 +4,8 @@
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [
 		"GameRendererMixin",
-		"BlockBreakMixin"
+		"BlockBreakMixin",
+		"InGameHudMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
