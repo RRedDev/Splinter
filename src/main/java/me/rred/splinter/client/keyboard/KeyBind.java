@@ -28,4 +28,8 @@ public class KeyBind {
             this.execute.run();
         }
     }
+
+    public KeyBinding getKeyBinding() {
+        return keyBinding;
+    }
 }

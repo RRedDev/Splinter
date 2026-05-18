@@ -33,6 +33,10 @@ public class SplinterSet {
         return (long) times.stream().mapToLong(Long::longValue).average().orElse(0);
     }
 
+    public long getBest() {
+        return (long) times.stream().mapToLong(Long::longValue).min().orElse(0);
+    }
+
     public String getName() {
         return name;
     }

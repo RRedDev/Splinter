@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "me.rred.splinter.mixin",
+	"package": "me.rred.splinter.client.mixin",
 	"compatibilityLevel": "JAVA_8",
 	"mixins": [
 		"GameRendererMixin",

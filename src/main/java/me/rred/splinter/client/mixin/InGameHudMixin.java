@@ -1,4 +1,4 @@
-package me.rred.splinter.mixin;
+package me.rred.splinter.client.mixin;
 
 import me.rred.splinter.client.timer.TimerHud;
 import net.minecraft.client.MinecraftClient;

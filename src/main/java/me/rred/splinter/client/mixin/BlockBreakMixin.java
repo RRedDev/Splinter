@@ -1,6 +1,5 @@
-package me.rred.splinter.mixin;
+package me.rred.splinter.client.mixin;
 
-import me.rred.splinter.client.SplinterClient;
 import me.rred.splinter.client.handler.BlockTargetHandler;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.world.ClientWorld;
