@@ -18,7 +18,7 @@ public abstract class ListPanel {
     public abstract int getItemCount();
 
     public void scroll(double amount) {
-        int maxScroll = Math.max(0, getItemCount() * LINE_HEIGHT - height);
+        int maxScroll = Math.max(0, getItemCount() * (LINE_HEIGHT + 1) - height + 1);
         scrollOffset -= (int) (amount * LINE_HEIGHT);
         scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
     }

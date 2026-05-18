@@ -28,6 +28,10 @@ public class SetsListPanel extends ListPanel {
     @Override
     public void render(MatrixStack matrixStack, TextRenderer textRenderer, int mouseX, int mouseY) {
         SplinterSet activeSet = SplinterClient.setManager.getActiveSet();
+        // draw top border for first
+        int borderColor = 0x80666666;
+        DrawableHelper.fill(matrixStack, x, y - scrollOffset, x + width,  y - scrollOffset + 1, borderColor);
+
 
         for (int i = 0; i < getItemCount(); i++) {
             SplinterSet set = sets.get(i);
@@ -55,9 +59,7 @@ public class SetsListPanel extends ListPanel {
             // draw background
             DrawableHelper.fill(matrixStack, x, itemY, x + width, itemY + LINE_HEIGHT, bgColor);
 
-            // draw border
-            int borderColor = 0x80666666;
-            DrawableHelper.fill(matrixStack, x, y - scrollOffset, x + width,  y - scrollOffset + 1, borderColor);
+            // draw bottom border for each record
             DrawableHelper.fill(matrixStack, x, itemY + LINE_HEIGHT, x + width, itemY + LINE_HEIGHT + 1, borderColor);
 
             // draw text

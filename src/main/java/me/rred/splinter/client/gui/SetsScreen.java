@@ -19,6 +19,7 @@ import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
+import java.sql.Time;
 import java.util.List;
 
 public class SetsScreen extends Screen {
@@ -48,9 +49,15 @@ public class SetsScreen extends Screen {
 
     // panel fields
     private SetsListPanel setsListPanel;
+    private TimesListPanel timesListPanelA;
+    private TimesListPanel timesListPanelB;
+    private int borderColor = 0x80555555;
+    private int borderWidth = 1;
     private int setsListWidth = 80;
     private int timesListWidth = 80;
-    // add time panels aswell
+    private int list2X;
+    private int list3X;
+    private int list4X;
 
     public SetsScreen() {
         super(new LiteralText("Splinter Sets"));
@@ -75,6 +82,10 @@ public class SetsScreen extends Screen {
         // middle section cutoff points
         listTop = screenTop + tabHeight;
         listBottom = screenBottom - statsHeight;
+        // list starting X coordinate (after border) list1 starts at screenLeft
+        list2X = screenLeft + setsListWidth + borderWidth;
+        list3X = list2X + timesListWidth + borderWidth;
+        list4X = list3X + timesListWidth + borderWidth;
 
         // panels for middle section
         int listHeight = listBottom - listTop;
@@ -97,6 +108,10 @@ public class SetsScreen extends Screen {
                     }
                 );
 
+        timesListPanelA = new TimesListPanel(list2X, listTop, timesListWidth, listHeight, setA);
+        timesListPanelB = new TimesListPanel(list3X, listTop, timesListWidth, listHeight, setB);
+
+
         // set creation button
         int createButtonWidth = 80;
         int createButtonHeight = 20;
@@ -116,10 +131,10 @@ public class SetsScreen extends Screen {
         int startX = screenLeft + createButtonWidth;
 
         if (setA != null) {
-            addButton(new ButtonWidget(startX, screenTop, headerButtonLen, headerButtonLen,
+            // + 1 for vertical borders
+            addButton(new ButtonWidget(startX + borderWidth, screenTop, headerButtonLen, headerButtonLen,
                     new LiteralText("-"),
                     button -> {
-                        Splinter.LOGGER.info("clearing setA");
                         SplinterClient.setManager.setDisplayedSetA(null);
                         init();
                     }
@@ -127,10 +142,9 @@ public class SetsScreen extends Screen {
         }
 
         if (setB != null) {
-            addButton(new ButtonWidget(startX + headerWidth, screenTop, headerButtonLen, headerButtonLen,
+            addButton(new ButtonWidget(startX + headerWidth + (2 * borderWidth), screenTop, headerButtonLen, headerButtonLen,
                     new LiteralText("-"),
                     button -> {
-                        Splinter.LOGGER.info("clearing setB");
                         SplinterClient.setManager.setDisplayedSetB(null);
                         init();
                     }
@@ -139,9 +153,71 @@ public class SetsScreen extends Screen {
     }
 
     @Override
+    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float delta) {
+
+        // draw GUI title text
+        drawCenteredText(matrixStack, textRenderer, title, width / 2, 10, 0xFFFFFF);
+
+        // draw backgrounds
+        // tabs bar (top)
+        fill(matrixStack, screenLeft, screenTop, screenRight, screenTop + tabHeight, 0x80333333);
+
+        // time list (middle)
+        fill(matrixStack, screenLeft, listTop, screenRight, listBottom, 0x80222222);
+
+        // draw vertical borders between columns
+        fill(matrixStack, list2X - borderWidth, screenTop, list2X, listBottom, borderColor);
+        fill(matrixStack, list3X - borderWidth, screenTop, list3X, listBottom, borderColor);
+        fill(matrixStack, list4X - borderWidth, screenTop, list4X, listBottom, borderColor);
+
+        // draw headers
+        int headerTextY = screenTop + (tabHeight - textRenderer.fontHeight + 1) / 2;
+        int setAX = list2X + headerButtonLen + padding;
+        int setBX = setAX + timesListWidth;
+
+        if (setA != null) {
+            textRenderer.drawWithShadow(matrixStack, setA.getName(), setAX, headerTextY, 0xFFFFFF);
+        }
+
+        if (setB != null) {
+            textRenderer.drawWithShadow(matrixStack, setB.getName(), setBX, headerTextY, 0xFFFFFF);
+        }
+
+        // render middle ListPanels
+
+        enableScissor();
+        setsListPanel.render(matrixStack, textRenderer, mouseX, mouseY);
+        timesListPanelA.render(matrixStack, textRenderer, mouseX, mouseY);
+        timesListPanelB.render(matrixStack, textRenderer, mouseX, mouseY);
+        // just focus on rendering the setsListPanel for now
+        disableScissor();
+
+        // render stats and overlays
+
+        renderStats(matrixStack);
+
+        if (activeOverlay != Overlay.NONE) {
+            renderOverlay(matrixStack);
+        }
+
+        // draw buttons
+        super.render(matrixStack, mouseX, mouseY, delta);
+    }
+
+    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
         if (setsListPanel.isMouseOver(mouseX, mouseY)) {
             setsListPanel.scroll(amount);
+            return true;
+        }
+
+        if (timesListPanelA.isMouseOver(mouseX, mouseY)) {
+            timesListPanelA.scroll(amount);
+            return true;
+        }
+
+        if (timesListPanelB.isMouseOver(mouseX, mouseY)) {
+            timesListPanelB.scroll(amount);
             return true;
         }
 
@@ -174,95 +250,6 @@ public class SetsScreen extends Screen {
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
-
-    @Override
-    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float delta) {
-
-        // draw GUI title text
-        drawCenteredText(matrixStack, textRenderer, title, width / 2, 10, 0xFFFFFF);
-
-        // draw backgrounds
-        // tabs bar (top)
-        fill(matrixStack, screenLeft, screenTop, screenRight, screenTop + tabHeight, 0x80333333);
-
-        // time list (middle)
-        fill(matrixStack, screenLeft, listTop, screenRight, listBottom, 0x80222222);
-
-        // draw vertical borders between columns
-        int borderColor = 0x80555555;
-        int borderWidth = 1;
-
-        int list2X = screenLeft + setsListWidth;
-        int list3X = list2X + timesListWidth;
-
-        fill(matrixStack, list2X, listTop, list2X + borderWidth, listBottom, borderColor);
-        fill(matrixStack, list3X, listTop, list3X + borderWidth, listBottom, borderColor);
-
-        // draw headers
-        int headerTextY = screenTop + (tabHeight - textRenderer.fontHeight + 1) / 2;
-        int setAX = screenLeft + setsListWidth + headerButtonLen + padding;
-        int setBX = setAX + timesListWidth;
-
-        if (setA != null) {
-            textRenderer.drawWithShadow(matrixStack, setA.getName(), setAX, headerTextY, 0xFFFFFF);
-        }
-
-        if (setB != null) {
-            int nameX = screenLeft + timesListWidth + headerButtonLen + padding;
-            textRenderer.drawWithShadow(matrixStack, setB.getName(), setBX, headerTextY, 0xFFFFFF);
-        }
-
-        // draw middle ListPanels
-
-        enableScissor();
-        setsListPanel.render(matrixStack, textRenderer, mouseX, mouseY);
-        // just focus on rendering the setsListPanel for now
-        disableScissor();
-
-        renderStats(matrixStack);
-
-        if (activeOverlay != Overlay.NONE) {
-            renderOverlay(matrixStack);
-        }
-
-        // draw buttons
-        super.render(matrixStack, mouseX, mouseY, delta);
-    }
-
-    /*
-    private void renderTimeList(MatrixStack matrixStack, int idx) {
-        List<Long> times = viewedSet.getTimes();
-        int timesLeft = screenLeft + 5 + (idx * 60);
-        int timesMiddle = timesLeft + 15;
-        int startY = screenTop + tabHeight + 5 - scrollOffset;
-
-        if (times.isEmpty()) {
-            drawTextWithShadow(matrixStack, textRenderer, new LiteralText("No times"), timesLeft, startY, 0xFFFFFF);
-        } else {
-            // draw list within background
-            double scale = client.getWindow().getScaleFactor();
-            int scissorX = 0;
-            int scissorY = (int)((height - listBottom) * scale);
-            int scissorW = (int)((width * scale));
-            int scissorH = (int)((listBottom - listTop) * scale);
-
-            GL11.glEnable(GL11.GL_SCISSOR_TEST);
-            GL11.glScissor(scissorX, scissorY, scissorW, scissorH);
-
-            for (int i = 0; i < times.size(); i++) {
-                int y = startY + (i * LINE_HEIGHT);
-                if (y + LINE_HEIGHT < listTop || y > listBottom) continue; // skip off-screen lines
-
-                String number = (i + 1) + ".";
-                String timeText = formatTime(times.get(i));
-                textRenderer.drawWithShadow(matrixStack, number, timesLeft, startY + (i * 12), 0xFFFFFF);
-                textRenderer.drawWithShadow(matrixStack, timeText, timesMiddle, startY + (i * 12), 0xFFFFFF);
-            }
-
-            GL11.glDisable(GL11.GL_SCISSOR_TEST);
-        }
-    }
-    */
 
     private void renderStats(MatrixStack matrixStack) {
         int col1X = screenLeft + padding;
