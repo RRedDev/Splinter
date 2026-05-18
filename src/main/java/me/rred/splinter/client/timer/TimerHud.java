@@ -2,6 +2,7 @@ package me.rred.splinter.client.timer;
 
 import me.rred.splinter.Splinter;
 import me.rred.splinter.client.SplinterClient;
+import me.rred.splinter.client.utils.TimerFormatter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -20,14 +21,7 @@ public class TimerHud {
         float scaledHeight = client.getWindow().getScaledHeight();
         float y = scaledHeight / 2;
 
-        String time =  formatTime(SplinterClient.tsm.getElapsedMs());
+        String time =  TimerFormatter.format(SplinterClient.tsm.getElapsedMs());
         fontRenderer.drawWithShadow(matrixStack, new LiteralText(time), 10, y, Color.WHITE.getRGB());
-    }
-
-    private static String formatTime(long ms) {
-        long minutes = ms / 60000;
-        long seconds = (ms % 60000) / 1000;
-        long millis = ms % 1000;
-        return String.format("%d:%02d.%03d", minutes, seconds, millis);
     }
 }

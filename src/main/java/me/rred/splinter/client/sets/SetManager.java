@@ -7,7 +7,10 @@ import java.util.List;
 
 public class SetManager {
     private List<SplinterSet> sets = new ArrayList<>();
-    private SplinterSet activeSet;
+    private SplinterSet activeSet = null;
+    private SplinterSet displayedSetA = null;
+    private SplinterSet displayedSetB = null;
+
 
     public SetManager() {
          SplinterSet generalSet = new SplinterSet("general");
@@ -25,7 +28,7 @@ public class SetManager {
     }
 
     public void createSet(String name) {
-        if (sets.size() >= 8) return;
+        if (sets.size() >= 8) return; // arbitrary cap of 8 for now
         SplinterSet newSet = new SplinterSet(name);
         sets.add(newSet);
     }
@@ -36,13 +39,21 @@ public class SetManager {
         sets.remove(idx);
     }
 
+    public SplinterSet getActiveSet() {
+        return activeSet;
+    }
+
     public void setActiveSet(SplinterSet set) {
         activeSet = set;
     }
 
-    public SplinterSet getActiveSet() {
-        return activeSet;
-    }
+    public SplinterSet getDisplayedSetA() { return displayedSetA; };
+
+    public void setDisplayedSetA(SplinterSet set) { displayedSetA = set;}
+
+    public SplinterSet getDisplayedSetB() { return displayedSetB; };
+
+    public void setDisplayedSetB(SplinterSet set) { displayedSetB = set;}
 
     public List<SplinterSet> getAllSets() {
         return sets;
