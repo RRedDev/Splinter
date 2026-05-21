@@ -23,6 +23,11 @@ public class ServerScoreboardMixin {
         int value = score.getScore();
         SplinterClient.routeHandler.onMapTickUpdated(value);
 
+        boolean inMap = value > 0;
+        if (inMap != SplinterClient.ssm.isInMap()) {
+            SplinterClient.ssm.setInMap(inMap);
+        }
+
         // notify trigger
     }
 

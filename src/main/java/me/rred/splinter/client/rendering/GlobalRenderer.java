@@ -2,7 +2,7 @@ package me.rred.splinter.client.rendering;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import me.rred.splinter.client.handler.BlockTargetHandler;
+import me.rred.splinter.client.SplinterClient;
 import net.minecraft.client.util.math.MatrixStack;
 
 public class GlobalRenderer {
@@ -26,7 +26,7 @@ public class GlobalRenderer {
         GlStateManager.disableDepthTest();
         GlStateManager.disableCull();
 
-        BlockTargetHandler.render();
+        SplinterClient.routeHandler.render();
 
         GlStateManager.enableDepthTest();
         GlStateManager.enableCull();

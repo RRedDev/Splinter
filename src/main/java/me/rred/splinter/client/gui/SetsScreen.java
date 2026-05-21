@@ -74,7 +74,7 @@ public class SetsScreen extends Screen {
         setA = SplinterClient.setManager.getDisplayedSetA();
         setB = SplinterClient.setManager.getDisplayedSetB();
 
-        // inside screen dimensions
+        // sets UI screen dimensions
         screenTop = offset;
         screenBottom = height - (int)(offset * 1.5) ;
         screenLeft = offset;
@@ -83,6 +83,7 @@ public class SetsScreen extends Screen {
         // middle section cutoff points
         listTop = screenTop + tabHeight;
         listBottom = screenBottom;
+
         // list starting X coordinate (after border) list1 starts at screenLeft
         list2X = screenLeft + setsListWidth + borderWidth;
         list3X = list2X + timesListWidth + borderWidth;
@@ -128,7 +129,6 @@ public class SetsScreen extends Screen {
 
         timesListPanelA = new TimesListPanel(list2X, listTop, timesListWidth, listHeight, setA);
         timesListPanelB = new TimesListPanel(list3X, listTop, timesListWidth, listHeight, setB);
-
 
         // set creation button
         int createButtonWidth = 80;

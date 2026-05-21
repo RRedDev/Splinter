@@ -1,12 +1,12 @@
-package me.rred.splinter.client.events;
+package me.rred.splinter.client.events.triggers;
 
-public abstract class TriggerEvent {
+public abstract class Trigger {
     public enum TriggerType { START, END }
 
     protected boolean triggered = false; // state
     protected TriggerType triggerType; // config type, start or end trigger
 
-    public TriggerEvent(TriggerType triggerType) {
+    public Trigger(TriggerType triggerType) {
         this.triggerType = triggerType;
     }
     // called by RouteHandler each tick for poll-based events;

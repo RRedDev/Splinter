@@ -28,21 +28,4 @@ public class BlockTargetHandler {
 //            SplinterClient.tsm.onBlockSelected(pos);
 //        }
     }
-
-    public static void onBlockBroken(BlockPos pos) {
-//        SplinterClient.tsm.onBlockBroken(pos);
-    }
-
-    public static void render() {
-//        BlockPos start = SplinterClient.tsm.getStartPos();
-//        BlockPos end = SplinterClient.tsm.getEndPos();
-//
-//        if (start != null) {
-//            new BlockOutlineRenderer(start, Color.GREEN).render();
-//        }
-//        if (end != null) {
-//            new BlockOutlineRenderer(end, Color.RED).render();
-//        }
-
-    }
 }

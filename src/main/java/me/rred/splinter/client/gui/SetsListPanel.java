@@ -16,6 +16,7 @@ public class SetsListPanel extends ListPanel {
     private BiConsumer<SplinterSet, Integer> onClick;
     private boolean isHovered = false;
     private int hoveredIndex = -1;
+    private int hoveredPauseIndex = -1;
 
     public SetsListPanel(int x, int y, int width, int height, List<SplinterSet> sets, BiConsumer<SplinterSet, Integer> onClick) {
         super(x, y, width, height);
@@ -32,6 +33,7 @@ public class SetsListPanel extends ListPanel {
     public void render(MatrixStack matrixStack, TextRenderer textRenderer, int mouseX, int mouseY, boolean showHover) {
         SplinterSet activeSet = SplinterClient.setManager.getActiveSet();
         hoveredIndex = -1;
+        hoveredPauseIndex = -1;
 
         for (int i = 0; i < getItemCount(); i++) {
             SplinterSet set = sets.get(i);
@@ -69,6 +71,29 @@ public class SetsListPanel extends ListPanel {
             int textY = itemY + (ITEM_HEIGHT - textRenderer.fontHeight ) / 2;
             int textColor = isActive ? 0xAAFFAA : 0xFFFFFF;
             textRenderer.drawWithShadow(matrixStack, setName, x + 3, textY, textColor);
+
+            // pause button to toggle between IDLE and ACTIVE state (stop recording)
+            if (isActive) {
+                String buttonLabel = SplinterClient.ssm.isActive() ? "■" : "▶";
+                int pauseSize = 11;
+                int pauseX = x + width - pauseSize - 2; // 2 px from right edge
+                int pauseY = itemY + (ITEM_HEIGHT - pauseSize) / 2;
+                int pauseTextX = 1 + pauseX + (pauseSize - textRenderer.getWidth(buttonLabel)) / 2; // 2 px from right edge
+                int pauseTextY = pauseY + (pauseSize - textRenderer.fontHeight) / 2 + 1;
+
+                boolean isPauseHovered = (
+                        mouseX >= pauseX && mouseX <= pauseX + pauseSize &&
+                                mouseY >= pauseY && mouseY <= pauseY + pauseSize
+                );
+
+                int pauseColor = SplinterClient.ssm.isActive() ? 0xFFFF2222 : 0xFF22FF22;
+                if (isPauseHovered) {
+                    hoveredPauseIndex = i;
+                    DrawableHelper.fill(matrixStack, pauseX, pauseY, pauseX + pauseSize, pauseY + pauseSize, 0x80FFFFFF);
+                }
+                textRenderer.draw(matrixStack, buttonLabel , pauseTextX, pauseTextY, pauseColor);
+
+            }
         }
     }
 
@@ -76,6 +101,14 @@ public class SetsListPanel extends ListPanel {
         if (!isMouseOver(mouseX, mouseY)) return false;
         if (onClick == null) return false;
         if (hoveredIndex < 0 || hoveredIndex >= sets.size()) return false;
+        if (hoveredPauseIndex >= 0 && button == 0) {
+            if (SplinterClient.ssm.isActive()) {
+                SplinterClient.ssm.setIdle();
+            } else {
+                SplinterClient.ssm.setActive();
+            }
+            return true;
+        }
 
         onClick.accept(sets.get(hoveredIndex), button);
         return true;

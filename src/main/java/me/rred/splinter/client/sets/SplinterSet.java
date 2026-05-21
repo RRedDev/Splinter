@@ -1,6 +1,7 @@
 package me.rred.splinter.client.sets;
 
 import me.rred.splinter.Splinter;
+import me.rred.splinter.client.route.Route;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,10 +10,12 @@ public class SplinterSet {
     private String name;
     private List<Long> times = new ArrayList<>(); // for now, data will just be non-persistent
     private final boolean isGeneral;
+    private Route route;
 
-    public SplinterSet(String name, boolean isGeneral) {
+    public SplinterSet(String name, boolean isGeneral, Route route) {
         this.name = name;
         this.isGeneral = isGeneral;
+        this.route = route;
     }
 
     public void addTime(long ms) {
@@ -54,11 +57,15 @@ public class SplinterSet {
     }
 
     public void setName(String newName) {
-        name = newName;
+        this.name = name;
     }
 
     public boolean isGeneral() {
         return isGeneral;
+    }
+
+    public Route getRoute() {
+        return route;
     }
 
 }
