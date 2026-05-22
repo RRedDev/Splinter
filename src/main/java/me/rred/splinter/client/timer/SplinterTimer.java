@@ -7,38 +7,49 @@ public class SplinterTimer {
     private enum State {IDLE, RUNNING, STOPPED}
     private State state = State.IDLE;
 
-    private long startTime = -1;
-    private long endTime = -1;
+    private int activeTicks = 0;
+    private int endTicks = 0;
+    private long leastTickTime;
+
+    public void tick() {
+        if (state == State.RUNNING) {
+            activeTicks++;
+            leastTickTime = System.currentTimeMillis();
+        }
+    }
 
     public void start() {
-        startTime = System.currentTimeMillis();
-        endTime = -1;
+        activeTicks = 0;
+        endTicks = 0;
+        leastTickTime = System.currentTimeMillis();
         state = State.RUNNING;
     }
 
     public void stop() {
         if (state == State.RUNNING) {
-            endTime = System.currentTimeMillis();
+            endTicks = activeTicks;
             state = State.STOPPED;
         }
     }
 
     public void clear() {
-        startTime = -1;
-        endTime = -1;
+        activeTicks = 0;
+        endTicks = 0;
+        leastTickTime = 0;
         state = State.IDLE;
     }
 
     public long fetchElapsedTime() {
-        if (startTime == -1) {
+        if (state == State.IDLE) {
             return 0;
         }
         if (isRunning()) {
-            return System.currentTimeMillis() - startTime;
+            long tickMs = activeTicks * 50L;
+            long interpolation = Math.min(50, System.currentTimeMillis() - leastTickTime);
+            return tickMs + interpolation;
         }
-        return endTime - startTime;
+        return endTicks * 50L;
     }
 
     public boolean isRunning() { return state == State.RUNNING; }
-    public boolean isStopped() { return state == State.STOPPED; }
 }

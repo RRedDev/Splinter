@@ -45,7 +45,7 @@ public class KeyInputHandler {
                     if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
                         EditSession edit = SplinterClient.ssm.getEditSession();
                         if (edit != null) {
-                            edit.selectStartBlock();
+                            edit.selectStartPos();
                         }
                     }
                 }),

@@ -8,14 +8,7 @@ public class BlockBreakTrigger extends Trigger{
 
     public BlockBreakTrigger(TriggerSlot triggerSlot, BlockPos pos) {
         super(triggerSlot);
-        Splinter.LOGGER.info("BlockBreakTrigger pos set to: {}", pos);
         this.pos = pos;
-    }
-
-    public BlockBreakTrigger(TriggerSlot triggerSlot) {
-        super(triggerSlot);
-        Splinter.LOGGER.info("BlockBreakTrigger pos set to: {}", pos);
-        this.pos = null;
     }
 
     public TriggerType getType() {
