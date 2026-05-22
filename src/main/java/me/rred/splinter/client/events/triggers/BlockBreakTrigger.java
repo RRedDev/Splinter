@@ -1,18 +1,25 @@
 package me.rred.splinter.client.events.triggers;
 
+import me.rred.splinter.Splinter;
 import net.minecraft.util.math.BlockPos;
 
 public class BlockBreakTrigger extends Trigger{
     private BlockPos pos;
 
-    public BlockBreakTrigger(TriggerType triggerType, BlockPos pos) {
-        super(triggerType);
+    public BlockBreakTrigger(TriggerSlot triggerSlot, BlockPos pos) {
+        super(triggerSlot);
+        Splinter.LOGGER.info("BlockBreakTrigger pos set to: {}", pos);
         this.pos = pos;
     }
 
-    public BlockBreakTrigger(TriggerType triggerType) {
-        super(triggerType);
+    public BlockBreakTrigger(TriggerSlot triggerSlot) {
+        super(triggerSlot);
+        Splinter.LOGGER.info("BlockBreakTrigger pos set to: {}", pos);
         this.pos = null;
+    }
+
+    public TriggerType getType() {
+        return TriggerType.BLOCK_BREAK;
     }
 
     public boolean matches(BlockPos broken) {

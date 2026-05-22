@@ -1,5 +1,6 @@
 package me.rred.splinter.client.mixin;
 
+import me.rred.splinter.client.SplinterClient;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
@@ -15,6 +16,7 @@ public class BlockBreakMixin {
         if (newState.isAir() && !oldState.isAir()) {
 //            BlockTargetHandler.onBlockBroken(pos);
 //            replace with RouteHandler eventually
+            SplinterClient.routeHandler.onBlockBroken(pos);
         }
     }
 }

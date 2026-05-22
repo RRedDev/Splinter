@@ -4,8 +4,8 @@ import me.rred.splinter.client.events.triggers.MapTrigger;
 import me.rred.splinter.client.events.triggers.Trigger;
 
 public class Route {
-    private Trigger startTrigger = new MapTrigger(Trigger.TriggerType.START);
-    private Trigger endTrigger = new MapTrigger(Trigger.TriggerType.END);
+    private Trigger startTrigger = new MapTrigger(Trigger.TriggerSlot.START);
+    private Trigger endTrigger = new MapTrigger(Trigger.TriggerSlot.END);
 
     public Trigger getStartTrigger() {
         return startTrigger;
@@ -15,7 +15,7 @@ public class Route {
         return endTrigger;
     }
 
-    public void setStartEvent(Trigger trigger) {
+    public void setStartTrigger(Trigger trigger) {
         startTrigger = trigger;
     }
 

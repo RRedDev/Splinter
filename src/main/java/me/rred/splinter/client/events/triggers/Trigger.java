@@ -1,14 +1,19 @@
 package me.rred.splinter.client.events.triggers;
 
 public abstract class Trigger {
-    public enum TriggerType { START, END }
+
+    public enum TriggerType {MAP, BLOCK_BREAK, POSITION}
+    public enum TriggerSlot { START, END }
 
     protected boolean triggered = false; // state
-    protected TriggerType triggerType; // config type, start or end trigger
+    protected TriggerSlot triggerSlot;
 
-    public Trigger(TriggerType triggerType) {
-        this.triggerType = triggerType;
+    public Trigger(TriggerSlot triggerSlot) {
+        this.triggerSlot = triggerSlot;
     }
+
+    public abstract TriggerType getType();
+
     // called by RouteHandler each tick for poll-based events;
     public void tick() {}
 
@@ -25,7 +30,7 @@ public abstract class Trigger {
         triggered = false;
     }
 
-    public TriggerType getTriggerType() {
-        return triggerType;
+    public TriggerSlot getTriggerSlot() {
+        return triggerSlot;
     }
 }

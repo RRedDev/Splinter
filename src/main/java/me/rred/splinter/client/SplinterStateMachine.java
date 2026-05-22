@@ -12,6 +12,7 @@ public class SplinterStateMachine {
 
     private State state = State.ACTIVE;
     private boolean inMap = false;
+    private EditSession editSession = null;
 
     public State getState() {
         return state;
@@ -29,6 +30,7 @@ public class SplinterStateMachine {
         if (state != State.IDLE) {
             state = State.IDLE;
             SplinterClient.timer.clear();
+            editSession = null;
             Splinter.LOGGER.info("SSM: switched to IDLE");
         }
         // stop listening, clear highlights
@@ -38,9 +40,14 @@ public class SplinterStateMachine {
         if (state == State.ACTIVE) return; // can't start running while making changes
         if (state == State.IDLE) {
             state = State.EDIT;
+            editSession = new EditSession(SplinterClient.setManager.getActiveSet());
             Splinter.LOGGER.info("SSM: switched to EDIT");
             // display set UI
         }
+    }
+
+    public EditSession getEditSession() {
+        return editSession;
     }
 
     public boolean isActive() {

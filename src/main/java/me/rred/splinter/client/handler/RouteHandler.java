@@ -1,5 +1,6 @@
 package me.rred.splinter.client.handler;
 
+import me.rred.splinter.Splinter;
 import me.rred.splinter.client.SplinterClient;
 import me.rred.splinter.client.SplinterStateMachine;
 import me.rred.splinter.client.events.triggers.BlockBreakTrigger;
@@ -9,6 +10,7 @@ import me.rred.splinter.client.rendering.BlockOutlineRenderer;
 import me.rred.splinter.client.route.Route;
 import me.rred.splinter.client.timer.SplinterTimer;
 import net.minecraft.block.Block;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.BlockPos;
 
 import java.awt.*;
@@ -29,7 +31,6 @@ public class RouteHandler {
 
         if (start instanceof MapTrigger mt) mt.mapTick(tick);
         if (end instanceof MapTrigger mt) mt.mapTick(tick);
-
 
         checkTriggers(route);
     }
@@ -72,12 +73,20 @@ public class RouteHandler {
         Trigger start = route.getStartTrigger();
         Trigger end = route.getEndTrigger();
 
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null) return;
+
         if (start instanceof BlockBreakTrigger bt && bt.getPos() != null) {
-            new BlockOutlineRenderer(bt.getPos(), Color.GREEN).render();
+            // stop rendering if block is broken
+            if (!client.world.getBlockState(bt.getPos()).isAir()) {
+                new BlockOutlineRenderer(bt.getPos(), Color.GREEN).render();
+            }
         }
 
         if (end instanceof BlockBreakTrigger bt && bt.getPos() != null) {
-            new BlockOutlineRenderer(bt.getPos(), Color.RED).render();
+            if (!client.world.getBlockState(bt.getPos()).isAir()) {
+                new BlockOutlineRenderer(bt.getPos(), Color.RED).render();
+            }
         }
     }
 

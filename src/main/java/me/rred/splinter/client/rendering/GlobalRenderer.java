@@ -2,7 +2,9 @@ package me.rred.splinter.client.rendering;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import me.rred.splinter.client.EditSession;
 import me.rred.splinter.client.SplinterClient;
+import me.rred.splinter.client.SplinterStateMachine;
 import net.minecraft.client.util.math.MatrixStack;
 
 public class GlobalRenderer {
@@ -27,6 +29,11 @@ public class GlobalRenderer {
         GlStateManager.disableCull();
 
         SplinterClient.routeHandler.render();
+
+        if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
+            EditSession session = SplinterClient.ssm.getEditSession();
+            if (session != null) session.renderOutlines();
+        }
 
         GlStateManager.enableDepthTest();
         GlStateManager.enableCull();

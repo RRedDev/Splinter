@@ -1,17 +1,13 @@
 package me.rred.splinter.client.keyboard;
 
-import me.rred.splinter.Splinter;
+import me.rred.splinter.client.EditSession;
 import me.rred.splinter.client.SplinterClient;
 import me.rred.splinter.client.SplinterStateMachine;
 import me.rred.splinter.client.gui.SetsScreen;
-import me.rred.splinter.client.handler.BlockTargetHandler;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.options.KeyBinding;
-import net.minecraft.client.util.InputUtil;
+import net.minecraft.text.LiteralText;
 import org.lwjgl.glfw.GLFW;
-import org.spongepowered.include.com.google.common.collect.Sets;
 
 public class KeyInputHandler {
     public static final String KEY_CATEGORY = "key.category.splinter";
@@ -19,7 +15,10 @@ public class KeyInputHandler {
     public static final String CLEAR_SELECTION = "key.splinter.clear_selection";
     public static final String TOGGLE_TIMER = "key.splinter.toggle_timer";
     public static final String GUI_SETS = "key.splinter.gui_sets";
-    public static final String TOGGLE_ACTIVE = "key.splinter.toggle_active";
+    public static final String TEMP_TOGGLE_EDIT = "key.splinter.temp_toggle_edit";
+    public static final String TEMP_SET_START = "key.splinter.temp_set_start";
+    public static final String TEMP_CONFIRM = "key.splinter.temp_confirm";
+
     public static KeyBind GUI_SETS_BIND;
 
 
@@ -28,15 +27,38 @@ public class KeyInputHandler {
         GUI_SETS_BIND = new KeyBind(GUI_SETS, GLFW.GLFW_KEY_B, SetsScreen::toggle);
 
         KeyBind[] keyBinds = new KeyBind[] {
-                new KeyBind(SELECT_BLOCK, GLFW.GLFW_KEY_H, BlockTargetHandler::toggleOutline),
                 new KeyBind(TOGGLE_TIMER, GLFW.GLFW_KEY_N, SplinterClient.routeHandler::toggleTimer),
-                new KeyBind(TOGGLE_ACTIVE, GLFW.GLFW_KEY_M, () -> {
-                    if (SplinterClient.ssm.getState() == SplinterStateMachine.State.ACTIVE) {
+                new KeyBind(TEMP_TOGGLE_EDIT, GLFW.GLFW_KEY_M, () -> {
+                    MinecraftClient client = MinecraftClient.getInstance();
+                    if (client.player == null) return;
+                    if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
+                        client.player.sendMessage(new LiteralText("idle mode entered"), false);
                         SplinterClient.ssm.setIdle();
-                    } else {
-                        SplinterClient.ssm.setActive();
+                    } else if (SplinterClient.ssm.getState() != SplinterStateMachine.State.EDIT) {
+                        if (client.player == null) return;
+                        client.player.sendMessage(new LiteralText("edit mode entered"), false);
+                        SplinterClient.ssm.setEdit();
                     }
                 }),
+
+                new KeyBind(TEMP_SET_START, GLFW.GLFW_KEY_K, () -> {
+                    if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
+                        EditSession edit = SplinterClient.ssm.getEditSession();
+                        if (edit != null) {
+                            edit.selectStartBlock();
+                        }
+                    }
+                }),
+
+                new KeyBind(TEMP_CONFIRM, GLFW.GLFW_KEY_L, () -> {
+                    if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
+                        EditSession edit = SplinterClient.ssm.getEditSession();
+                        if (edit != null) {
+                            edit.confirm();
+                        }
+                    }
+                }),
+
                 GUI_SETS_BIND
         };
 

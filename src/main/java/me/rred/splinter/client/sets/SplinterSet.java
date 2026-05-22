@@ -20,7 +20,6 @@ public class SplinterSet {
 
     public void addTime(long ms) {
         times.add(ms);
-        Splinter.LOGGER.info("time added to set '{}': {}ms, total runs: {}", name, ms, times.size());
     }
 
     public void removeTime(int idx) {
