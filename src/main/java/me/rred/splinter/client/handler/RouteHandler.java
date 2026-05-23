@@ -10,8 +10,11 @@ import me.rred.splinter.client.events.triggers.Trigger;
 import me.rred.splinter.client.rendering.BlockOutlineRenderer;
 import me.rred.splinter.client.route.Route;
 import me.rred.splinter.client.timer.SplinterTimer;
+import me.rred.splinter.client.utils.TriggersSharePos;
 import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.LiteralText;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 
 import java.awt.*;
@@ -19,30 +22,23 @@ import java.awt.*;
 public class RouteHandler {
     boolean startFired = false;
     boolean endFired = false;
+    private boolean initialized = false;
 
     public void tick() {
         if (SplinterClient.ssm.getState() != SplinterStateMachine.State.ACTIVE) return;
+        if (!initialized) {
+            initialized = true;
+        }
         // tick poll-based events
         Route route = SplinterClient.setManager.getActiveSet().getRoute();
         Trigger start = route.getStartTrigger();
         Trigger end = route.getEndTrigger();
 
-        if (start instanceof PositionTrigger pt && !startFired) pt.tick();
-        if (end instanceof PositionTrigger pt && !endFired) pt.tick();
+        if (start instanceof PositionTrigger pt) pt.tick();
 
+        // only tick after start fires
+        if (startFired && end instanceof PositionTrigger pt) pt.tick();
         checkTriggers(route);
-    }
-
-    public void render() {
-        if (!SplinterClient.ssm.isActive()) return;
-        if (!SplinterClient.ssm.isInMap()) return;
-
-        Route route = SplinterClient.setManager.getActiveSet().getRoute();
-        Trigger start = route.getStartTrigger();
-        Trigger end = route.getEndTrigger();
-
-        renderTriggerOutline(start, startFired, Color.GREEN);
-        renderTriggerOutline(end, endFired, Color.RED);
     }
 
     public void onMapTickUpdated(int tick) {
@@ -58,16 +54,37 @@ public class RouteHandler {
         checkTriggers(route);
     }
 
-    private void checkTriggers(Route route) {
+    public void render() {
+        if (!SplinterClient.ssm.isActive()) return;
+        if (!SplinterClient.ssm.isInMap()) return;
+
+        Route route = SplinterClient.setManager.getActiveSet().getRoute();
         Trigger start = route.getStartTrigger();
         Trigger end = route.getEndTrigger();
 
-        if (start.isTriggered()) {
+        boolean isShared = TriggersSharePos.check(start, end);
+        boolean bothActive = isShared && !startFired && !endFired;
+
+        renderTriggerOutline(start, startFired, Color.GREEN, 0f);
+        renderTriggerOutline(end, endFired, Color.RED, bothActive ? 0.05f : 0f);
+    }
+
+    public void resetFired() {
+        startFired = false;
+        endFired = false;
+    }
+
+    private void checkTriggers(Route route) {
+        Trigger start = route.getStartTrigger();
+        Trigger end = route.getEndTrigger();
+        boolean inMap = SplinterClient.ssm.isInMap();
+
+        if (start.isTriggered() && !startFired) {
             SplinterClient.timer.clear();
             SplinterClient.timer.start();
             start.reset();
             startFired = true;
-            endFired = false;
+            if (end instanceof PositionTrigger pt) pt.primed = false;
         }
 
         if (end.isTriggered()) {
@@ -76,9 +93,11 @@ public class RouteHandler {
                 long time = SplinterClient.timer.fetchElapsedTime();
                 SplinterClient.setManager.addTime(time);
                 endFired = true;
-                startFired = false;
             }
             end.reset();
+        }
+        if (!inMap) {
+            resetFired();
         }
     }
 
@@ -89,8 +108,25 @@ public class RouteHandler {
         Trigger start = route.getStartTrigger();
         Trigger end = route.getEndTrigger();
 
-        if (start instanceof BlockBreakTrigger bt && bt.matches(pos)) start.onFired();
-        if (end instanceof BlockBreakTrigger bt && bt.matches(pos)) end.onFired();
+        if (start instanceof BlockBreakTrigger bt && bt.matches(pos)) {
+            start.onFired();
+            checkTriggers(route);
+        }
+        if (end instanceof BlockBreakTrigger bt && bt.matches(pos)) {
+            MinecraftClient client = MinecraftClient.getInstance();
+            assert client.world != null;
+            // end trigger is broken before route starts
+            if (!startFired || client.world.getBlockState(bt.getPos()).isAir()) {
+                startFired = true;
+                endFired = true;
+                assert client.player != null;
+                client.player.sendMessage(new LiteralText("trial stopped due to premature ending trigger").styled(s -> s.withColor(Formatting.RED)), false);
+                SplinterClient.timer.clear();
+                return;
+            }
+            end.onFired();
+            checkTriggers(route);
+        }
 
     }
 
@@ -109,18 +145,21 @@ public class RouteHandler {
         Route route = SplinterClient.setManager.getActiveSet().getRoute();
         route.getStartTrigger().reset();
         route.getEndTrigger().reset();
-        startFired = false;
-        endFired = false;
+        resetFired();
     }
 
-    private void renderTriggerOutline(Trigger trigger, boolean fired, Color color) {
+    private void renderTriggerOutline(Trigger trigger, boolean fired, Color color, float padding) {
         if (fired) return;
         if (trigger instanceof BlockBreakTrigger bt && bt.getPos() != null) {
-            new BlockOutlineRenderer(bt.getPos(), color).render();
+            new BlockOutlineRenderer(bt.getPos(), color, padding).render();
         }
         if (trigger instanceof PositionTrigger pt && pt.getPos() != null) {
-            new BlockOutlineRenderer(pt.getPos(), color).render();
+            new BlockOutlineRenderer(pt.getPos(), color, padding).render();
         }
     }
 
+    public void onWorldJoin() {
+        initialized = false;
+        resetFired();
+    }
 }

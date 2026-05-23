@@ -16,8 +16,11 @@ public class KeyInputHandler {
     public static final String TOGGLE_TIMER = "key.splinter.toggle_timer";
     public static final String GUI_SETS = "key.splinter.gui_sets";
     public static final String TEMP_TOGGLE_EDIT = "key.splinter.temp_toggle_edit";
-    public static final String TEMP_SET_START = "key.splinter.temp_set_start";
+    public static final String TEMP_SELECT_ACTIVE = "key.splinter.temp_select_active";
     public static final String TEMP_CONFIRM = "key.splinter.temp_confirm";
+    public static final String TEMP_TOGGLE_ACTIVE = "key.splinter.temp_toggle_active";
+    public static final String TEMP_CYCLE_TYPE = "key.splinter.temp_cycle_type";
+
 
     public static KeyBind GUI_SETS_BIND;
 
@@ -41,21 +44,31 @@ public class KeyInputHandler {
                     }
                 }),
 
-                new KeyBind(TEMP_SET_START, GLFW.GLFW_KEY_K, () -> {
+                new KeyBind(TEMP_SELECT_ACTIVE, GLFW.GLFW_KEY_K, () -> {
                     if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
                         EditSession edit = SplinterClient.ssm.getEditSession();
-                        if (edit != null) {
-                            edit.selectStartPos();
-                        }
+                        if (edit != null) edit.selectActive();
                     }
                 }),
 
-                new KeyBind(TEMP_CONFIRM, GLFW.GLFW_KEY_L, () -> {
+                new KeyBind(TEMP_TOGGLE_ACTIVE, GLFW.GLFW_KEY_P, () -> {
                     if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
                         EditSession edit = SplinterClient.ssm.getEditSession();
-                        if (edit != null) {
-                            edit.confirm();
-                        }
+                        if (edit != null) edit.toggleActiveSlot();
+                    }
+                }),
+
+                new KeyBind(TEMP_CYCLE_TYPE, GLFW.GLFW_KEY_O, () -> {
+                    if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
+                        EditSession edit = SplinterClient.ssm.getEditSession();
+                        if (edit != null) edit.cycleActiveType();
+                    }
+                }),
+
+                new KeyBind(TEMP_CONFIRM, GLFW.GLFW_KEY_PERIOD, () -> {
+                    if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
+                        EditSession edit = SplinterClient.ssm.getEditSession();
+                        if (edit != null) edit.confirm();
                     }
                 }),
 

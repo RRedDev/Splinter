@@ -21,9 +21,11 @@ public class SplinterStateMachine {
     public void setActive() {
         if (state == State.IDLE) {
             state = State.ACTIVE;
+            SplinterClient.routeHandler.resetFired();
             Splinter.LOGGER.info("SSM: switched to ACTIVE");
             // begin listening for events
         }
+        // eventually allow active -> edit possibly
     }
 
     public void setIdle() {
@@ -67,12 +69,4 @@ public class SplinterStateMachine {
     public boolean isInMap() {
         return inMap;
     }
-
-
-
-
-
-
-
-
 }

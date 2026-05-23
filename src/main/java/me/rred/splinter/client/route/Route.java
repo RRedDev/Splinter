@@ -1,6 +1,7 @@
 package me.rred.splinter.client.route;
 
 import me.rred.splinter.client.events.triggers.MapTrigger;
+import me.rred.splinter.client.events.triggers.PositionTrigger;
 import me.rred.splinter.client.events.triggers.Trigger;
 
 public class Route {

@@ -6,7 +6,8 @@
   "client": [
     "BlockBreakMixin",
     "GameRendererMixin",
-    "InGameHudMixin"
+    "InGameHudMixin",
+    "ClientPlayNetworkHandlerMixin"
   ],
 
   "injectors": {

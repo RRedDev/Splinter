@@ -24,17 +24,17 @@ public class BlockOutlineRenderer {
     };
     private Color color;
 
-    public BlockOutlineRenderer(BlockPos blockPos, Color color) {
+    public BlockOutlineRenderer(BlockPos blockPos, Color color, float padding) {
         this.color = color;
         this.corners = new Vec3d[8];
         Vec3d center = blockToVec(blockPos);
 
-        double minX = center.getX() - 0.5;
-        double maxX = center.getX() + 0.5;
-        double minY = center.getY() - 0.5;
-        double maxY = center.getY() + 0.5;
-        double minZ = center.getZ() - 0.5;
-        double maxZ = center.getZ() + 0.5;
+        double minX = center.getX() - 0.5 - padding;
+        double maxX = center.getX() + 0.5 + padding;
+        double minY = center.getY() - 0.5 - padding;
+        double maxY = center.getY() + 0.5 + padding;
+        double minZ = center.getZ() - 0.5 - padding;
+        double maxZ = center.getZ() + 0.5 + padding;
 
         corners[0] = new Vec3d(minX, minY, minZ);
         corners[1] = new Vec3d(maxX, minY, minZ);
@@ -45,6 +45,11 @@ public class BlockOutlineRenderer {
         corners[6] = new Vec3d(maxX, maxY, maxZ);
         corners[7] = new Vec3d(minX, maxY, maxZ);
     }
+
+    public BlockOutlineRenderer(BlockPos blockPos, Color color) {
+        this(blockPos, color, 0f);
+    }
+
 
     public void setColor(Color value) {
         color = value;
