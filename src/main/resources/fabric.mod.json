@@ -8,7 +8,7 @@
 		"RRed"
 	],
 	"contact": {},
-	"license": "",
+	"license": "MIT",
 	"icon": "assets/splinter/icon.png",
 	"environment": "*",
 	"entrypoints": {
