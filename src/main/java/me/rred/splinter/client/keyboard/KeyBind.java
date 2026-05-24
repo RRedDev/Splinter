@@ -24,7 +24,6 @@ public class KeyBind {
 
     public void update() {
         if (this.keyBinding.wasPressed()) {
-            Splinter.LOGGER.info("Key pressed!");
             this.execute.run();
         }
     }

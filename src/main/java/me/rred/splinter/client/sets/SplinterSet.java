@@ -55,8 +55,16 @@ public class SplinterSet {
         return name;
     }
 
-    public void setName(String newName) {
-        this.name = name;
+    public void renameSet(String newName) {
+        this.name = newName;
+    }
+
+    public void clearSet() {
+        times.clear();
+    }
+
+    public boolean isEmpty() {
+        return times.isEmpty();
     }
 
     public boolean isGeneral() {

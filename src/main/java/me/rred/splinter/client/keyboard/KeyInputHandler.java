@@ -12,9 +12,9 @@ import org.lwjgl.glfw.GLFW;
 
 public class KeyInputHandler {
     public static final String KEY_CATEGORY = "key.category.splinter";
+
     public static final String TOGGLE_TIMER = "key.splinter.toggle_timer";
     public static final String GUI_SETS = "key.splinter.gui_sets";
-
     public static final String TOGGLE_EDIT = "key.splinter.toggle_edit";
     public static final String GUI_EDIT = "key.splinter.gui_edit";
     public static final String EDIT_SELECT = "key.splinter.edit_select";
@@ -35,11 +35,11 @@ public class KeyInputHandler {
         });
         TOGGLE_EDIT_BIND = new KeyBind(TOGGLE_EDIT, GLFW.GLFW_KEY_J, () -> {
             MinecraftClient client = MinecraftClient.getInstance();
-            if (client.player == null) return;
+            if (client.player == null || client.world == null) return;
+
             if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
                 SplinterClient.ssm.setIdle();
             } else if (SplinterClient.ssm.getState() != SplinterStateMachine.State.EDIT) {
-                if (client.player == null) return;
                 SplinterClient.ssm.setEdit();
             }
         });

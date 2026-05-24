@@ -37,7 +37,7 @@ public class SetsScreen extends Screen {
     private static final int textColor = 0xFFFFFF;
 
     // overlay fields
-    private enum Overlay { NONE, CREATE, REMOVE }
+    private enum Overlay { NONE, CREATE, REMOVE, RENAME, CLEAR }
     private Overlay activeOverlay = Overlay.NONE;
     private static final Identifier WARNING_ICON = new Identifier("splinter", "textures/areyousuresmallest.png");
     private int overlayWidth = 150;
@@ -46,6 +46,7 @@ public class SetsScreen extends Screen {
     private boolean showWarningIcon = false;
     private TextFieldWidget createNameField;
     private ButtonWidget confirmButton;
+    private SplinterSet overlayTargetSet;
 
     // panel fields
     private SetsListPanel setsListPanel;
@@ -95,7 +96,8 @@ public class SetsScreen extends Screen {
                 (set, button) -> {
                         if (button == 0) { // left click
                             // refresh edit session or send confirm message
-                            if (activeSet != set) {
+                            SplinterSet currActiveSet = SplinterClient.setManager.getActiveSet();
+                            if (currActiveSet != set) {
                                 if (SplinterClient.ssm.isEditingWithChanges()) {
                                     // editing with changes
                                     client.player.sendMessage(new LiteralText("confirm or cancel changes in GUI")
@@ -105,8 +107,9 @@ public class SetsScreen extends Screen {
                                     SplinterClient.setManager.setActiveSet(set);
                                     SplinterClient.ssm.refreshEditSession();
                                 } else if (SplinterClient.timer.isRunning()) {
-                                    // timer is running, invalidate the run
+                                    // timer is running, invalidate the run then switch
                                     SplinterClient.routeHandler.invalidateRun();
+                                    SplinterClient.setManager.setActiveSet(set);
                                 } else {
                                     // swap set if it's not already active
                                     SplinterClient.setManager.setActiveSet(set);
@@ -116,22 +119,21 @@ public class SetsScreen extends Screen {
                             // RC + SHIFT or both are full
                             if (hasShiftDown() || (setA != null && setB != null)) {
                                 // context menu
-                                contextMenu.open(lastClickX, lastClickY, set,
-                                        () -> {
-                                            // set as A
+                                contextMenu.open(lastClickX, lastClickY, set, List.of(
+                                        new ContextMenu.Option("Set as A", () -> {
                                             SplinterClient.setManager.setDisplayedSetA(set);
                                             init();
-                                        },
-                                        () -> {
-                                            // set as B
+                                        }, 0xFFFFFF,
+                                                SplinterClient.setManager.getDisplayedSetA() != set),
+                                        new ContextMenu.Option("Set as B", () -> {
                                             SplinterClient.setManager.setDisplayedSetB(set);
                                             init();
-                                        },
-                                        () -> {
-                                            // delete set
-                                            openRemoveOverlay(set);
-                                        }
-                                );
+                                        }, 0xFFFFFF,
+                                                SplinterClient.setManager.getDisplayedSetB() != set),
+                                        new ContextMenu.Option("Rename", () -> openRenameOverlay(set), 0xFFFFFF, true),
+                                        new ContextMenu.Option("Clear", () -> openClearOverlay(set), 0xFFFFFF, !set.isEmpty()),
+                                        new ContextMenu.Option("Delete", () -> openRemoveOverlay(set), 0xFF5555, !set.isGeneral())
+                                ));
                             } else if (setA == null && setB != set) {
                                 SplinterClient.setManager.setDisplayedSetA(set);
                                 init();
@@ -197,16 +199,24 @@ public class SetsScreen extends Screen {
         fill(matrixStack, screenLeft, screenTop, screenRight, screenTop + tabHeight, topPanelColor);
 
         // middle panel (sets, times, stats)
-        int middlePanelColor = 0x80222222;
+        int middlePanelColor = 0xE0383840; // 88% opacity
         fill(matrixStack, screenLeft, listTop, screenRight, listBottom, middlePanelColor);
+
+        int textHeight = textRenderer.fontHeight;
+        int vertGap = 3;
+        int hintGap = 10;
+        // context menu hint
+        String menuHintText1 = "Ctrl + Right Mouse";
+        String menuHintText2 = "to open set context menu";
+
+        textRenderer.drawWithShadow(matrixStack, menuHintText1, list4X + 5, screenBottom - hintGap - (vertGap + textHeight) * 5, textColor);
+        textRenderer.drawWithShadow(matrixStack, menuHintText2, list4X + 5, screenBottom - hintGap - (vertGap + textHeight) * 4, textColor);// top panel (tabs)
 
         // edit mode hint
         String keybind = KeyInputHandler.TOGGLE_EDIT_BIND.getKeyBinding().getBoundKeyLocalizedText().getString();
         String editMessage1 = "enter idle mode by";
         String editMessage2 = "pressing the \"■\" symbol";
-        String editMessage3 = "& enter edit mode with: " + keybind;
-        int textHeight = textRenderer.fontHeight;
-        int vertGap = 3;
+        String editMessage3 = "& enter edit mode with " + "\"" + keybind + "\"";
 
         textRenderer.drawWithShadow(matrixStack, editMessage1, list4X + 5, screenBottom - (vertGap + textHeight)* 3, textColor);
         textRenderer.drawWithShadow(matrixStack, editMessage2, list4X + 5, screenBottom - (vertGap + textHeight) * 2, textColor);
@@ -214,7 +224,7 @@ public class SetsScreen extends Screen {
 
         // outer border
         // top
-        int outerBorderColor = 0xFF444444;
+        int outerBorderColor = 0xFF666666;
         fill(matrixStack, screenLeft - borderWidth, screenTop - borderWidth, screenRight + borderWidth, screenTop, outerBorderColor);
         // bottom
         fill(matrixStack, screenLeft - borderWidth, screenBottom, screenRight + borderWidth, screenBottom + borderWidth, outerBorderColor);
@@ -224,7 +234,7 @@ public class SetsScreen extends Screen {
         fill(matrixStack, screenRight, screenTop, screenRight + borderWidth, screenBottom, outerBorderColor);
 
         // vertical borders between columns
-        int verticalBorderColor = 0xFF3A3A3A;
+        int verticalBorderColor = 0xFF555560;
         fill(matrixStack, list2X - borderWidth, screenTop, list2X, listBottom, verticalBorderColor);
         fill(matrixStack, list3X - borderWidth, screenTop, list3X, listBottom, verticalBorderColor);
         fill(matrixStack, list4X - borderWidth, screenTop, list4X, listBottom, verticalBorderColor);
@@ -234,7 +244,7 @@ public class SetsScreen extends Screen {
         int setAX = list2X + headerButtonLen + 3;
         int setBX = setAX + timesListWidth;
         int headerWidth = timesListWidth - headerButtonLen - 6;
-        int headersBorderColor = outerBorderColor;
+        int headersBorderColor = 0xFF666666;
         DrawableHelper.fill(matrixStack, screenLeft, listTop, screenRight,  listTop + borderWidth, headersBorderColor);
 
         if (setA != null) {
@@ -265,9 +275,8 @@ public class SetsScreen extends Screen {
         // render stats and overlays
         renderStats(matrixStack);
 
-        if (activeOverlay != Overlay.NONE) {
-            renderOverlay(matrixStack);
-        }
+        // overlay renders on top of everything
+        if (activeOverlay != Overlay.NONE) renderOverlay(matrixStack);
 
         // draw buttons
         super.render(matrixStack, mouseX, mouseY, delta);
@@ -298,7 +307,12 @@ public class SetsScreen extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         lastClickX = (int) mouseX;
         lastClickY = (int) mouseY;
-        // context menu gets priority
+        // overlays get first priority
+        if (activeOverlay != Overlay.NONE) {
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
+
+        // context menu gets priority over setlist
         if (contextMenu.isVisible()) {
             if (contextMenu.handleClick(mouseX, mouseY)) return true;
             contextMenu.close();
@@ -321,7 +335,7 @@ public class SetsScreen extends Screen {
                 closeOverlay();
                 return true;
             } else if (KeyInputHandler.GUI_SETS_BIND.getKeyBinding().matchesKey(keyCode, scanCode)
-                    && activeOverlay == Overlay.CREATE) {
+                    && (activeOverlay == Overlay.CREATE || activeOverlay == Overlay.RENAME)) {
                 // don't close create overlay,  might want to use the letter for the name
                 return false;
             }
@@ -329,7 +343,7 @@ public class SetsScreen extends Screen {
             return true;
         }
         // pass input into the CREATE Overlay text field
-        if (activeOverlay == Overlay.CREATE && createNameField != null) {
+        if ((activeOverlay == Overlay.CREATE || activeOverlay == Overlay.RENAME) && createNameField != null) {
             return createNameField.keyPressed(keyCode, scanCode, modifiers);
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
@@ -343,7 +357,7 @@ public class SetsScreen extends Screen {
         int panelWidth = screenRight - list4X;
         int panelX = list4X;
 
-        int dividerColor = 0xFF3A3A3A;
+        int dividerColor = 0xFF555560;
         // beginning position of the next column, after the border
         int colWidth = panelWidth / 4;
         int stats2X = panelX + panelWidth / 6 + borderWidth;
@@ -417,6 +431,7 @@ public class SetsScreen extends Screen {
     }
 
     private void renderOverlay(MatrixStack matrixStack) {
+        // should probably refactor overlays eventually, they are very ugly
         fill(matrixStack, overlayX, overlayY, overlayX + overlayWidth, overlayY + overlayHeight, 0xFF222222);
 
         if (activeOverlay == Overlay.CREATE) {
@@ -446,9 +461,23 @@ public class SetsScreen extends Screen {
                 DrawableHelper.drawTexture(matrixStack, imgX, imgY, 0, 0, imgSquish, imgSquish, imgSize, imgSize);
             }
             drawCenteredText(matrixStack, textRenderer, new LiteralText("Are you sure?"), width / 2, overlayY + 10, textColor);
+        } else if (activeOverlay == Overlay.RENAME) {
+            // check if the confirm button should be active
+            if (createNameField != null && confirmButton != null) {
+                String name = createNameField.getText().trim();
+                confirmButton.active = SetNameValidation.isValid(name);
+            }
+            drawCenteredText(matrixStack, textRenderer, new LiteralText("Rename set"), width / 2, overlayY + 5, textColor);
+            if (createNameField != null) {
+                // show current name above text field
+                String currentName = "\"" + overlayTargetSet.getName() + "\"";
+                drawCenteredText(matrixStack, textRenderer, new LiteralText(currentName), width / 2, overlayY + 18, 0xAAAAAA);
+                createNameField.render(matrixStack, 0, 0, 0);
+            }
+        } else if (activeOverlay == Overlay.CLEAR) {
+            drawCenteredText(matrixStack, textRenderer, new LiteralText("Clear all times?"), width / 2, overlayY + 10, textColor);
         }
     }
-
 
     private void enableScissor() {
         double scale = client.getWindow().getScaleFactor();
@@ -482,6 +511,7 @@ public class SetsScreen extends Screen {
         int confirmHeight = 20;
         int confirmX = (width - confirmWidth) / 2; // centered
         int confirmY = inputY + inputHeight + 8;
+
         confirmButton = new ButtonWidget(confirmX, confirmY, confirmWidth, confirmHeight,
                 new LiteralText("CONFIRM"),
                 button-> {
@@ -516,8 +546,70 @@ public class SetsScreen extends Screen {
         addButton(confirmButton);
     }
 
+    private void openRenameOverlay(SplinterSet set) {
+        overlayHeight = 85;
+        overlayX = (width - overlayWidth) / 2;
+        overlayY = (height - overlayHeight) / 2;
+        activeOverlay = Overlay.RENAME;
+        this.overlayTargetSet = set;
+
+        if (confirmButton != null) buttons.remove(confirmButton);
+
+        int inputWidth = 130;
+        int inputHeight = 16;
+        int inputX = (width - inputWidth) / 2;
+        int inputY = overlayY + 32;
+
+        createNameField = new TextFieldWidget(textRenderer, inputX, inputY, inputWidth, inputHeight, new LiteralText(""));
+        createNameField.setMaxLength(20);
+        createNameField.setFocusUnlocked(true);
+        children.add(createNameField);
+
+        int confirmWidth = 60;
+        int confirmHeight = 20;
+        int confirmX = (width - confirmWidth) / 2; // centered
+        int confirmY = inputY + inputHeight + 8;
+
+        confirmButton = new ButtonWidget(confirmX, confirmY, confirmWidth, confirmHeight,
+                new LiteralText("CONFIRM"),
+                button-> {
+                    if (createNameField == null) return;
+                    String name = createNameField.getText().trim();
+                    if(!name.isEmpty()) {
+                        set.renameSet(name);
+                        closeOverlay();
+                    }
+                }
+        );
+        addButton(confirmButton);
+    }
+
+    private void openClearOverlay(SplinterSet set) {
+        overlayX = (width - overlayWidth) / 2;
+        overlayY = (height - overlayHeight) / 2;
+        activeOverlay = Overlay.CLEAR;
+
+        if (confirmButton != null) buttons.remove(confirmButton);
+
+        int confirmWidth = 60;
+        int confirmHeight = 20;
+        int confirmX = (width - confirmWidth) / 2; // centered
+        int confirmY = overlayY + 32;
+
+        confirmButton = new ButtonWidget(confirmX, confirmY, confirmWidth, confirmHeight,
+                new LiteralText("CONFIRM"),
+                button-> {
+                    set.clearSet();
+                    closeOverlay();
+                }
+        );
+        addButton(confirmButton);
+    }
+
     private void closeOverlay() {
+        overlayHeight = 65; // for now hardcode this, later make it dynamic
         activeOverlay = Overlay.NONE;
+        this.overlayTargetSet = null;
         if (createNameField != null) {
             children.remove(createNameField);
             createNameField = null;

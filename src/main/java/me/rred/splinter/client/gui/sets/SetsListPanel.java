@@ -72,6 +72,10 @@ public class SetsListPanel extends ListPanel {
 
             int textY = itemY + (ITEM_HEIGHT - textRenderer.fontHeight ) / 2;
             int textColor = isActive ? 0xAAFFAA : 0xFFFFFF;
+            if (set.isGeneral()) {
+                DrawableHelper.fill(matrixStack, x, itemY, x + 1, itemY + LINE_HEIGHT, 0xFF5599FF);
+                textColor = isActive ? 0xAADDFF : 0xAABBFF;
+            }
             int textWidth = (pauseX) - (x + 3);
             textRenderer.drawWithShadow(matrixStack,
                     TruncateText.truncate(setName, textWidth, textRenderer),
