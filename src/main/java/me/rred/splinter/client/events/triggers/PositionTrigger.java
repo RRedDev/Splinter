@@ -42,5 +42,15 @@ public class PositionTrigger extends Trigger {
         this.pos = pos;
     }
 
+    public boolean equals(Object obj) {
+        if (!(obj instanceof PositionTrigger other)) return false;
+        if (pos != null && other.pos != null) {
+            return pos.equals(other.pos);
+        } else {
+            return pos == null && other.pos == null;
+        }
+    }
+
+
 
 }

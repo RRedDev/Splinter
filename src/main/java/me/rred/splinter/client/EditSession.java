@@ -4,8 +4,8 @@ import me.rred.splinter.client.events.triggers.BlockBreakTrigger;
 import me.rred.splinter.client.events.triggers.MapTrigger;
 import me.rred.splinter.client.events.triggers.PositionTrigger;
 import me.rred.splinter.client.events.triggers.Trigger;
+import me.rred.splinter.client.gui.EditScreen;
 import me.rred.splinter.client.rendering.BlockOutlineRenderer;
-import me.rred.splinter.client.route.Route;
 import me.rred.splinter.client.sets.SplinterSet;
 import me.rred.splinter.client.utils.TriggersSharePos;
 import net.minecraft.client.MinecraftClient;
@@ -18,18 +18,22 @@ import net.minecraft.util.math.BlockPos;
 import java.awt.*;
 
 public class EditSession {
-    private Trigger.TriggerSlot activeSlot;
-    private Trigger.TriggerType activeType;
+    private Trigger activeTrigger;
+    private Trigger oldActiveTrigger;
+    private final Trigger ogStart;
+    private final Trigger ogEnd;
     private Trigger pendingStart;
     private Trigger pendingEnd;
-    private SplinterSet editSet;
+    private final SplinterSet editSet;
     private BlockPos hoveredPos;
 
 
     public EditSession(SplinterSet set) {
         this.editSet = set; // most likely just the active set for now
-        this.pendingStart = set.getRoute().getStartTrigger();
-        this.pendingEnd = set.getRoute().getEndTrigger();
+        this.ogStart = set.getRoute().getStartTrigger();
+        this.ogEnd = set.getRoute().getEndTrigger();
+        this.pendingStart = ogStart;
+        this.pendingEnd = ogEnd;
     }
 
     public void renderHud(MatrixStack matrixStack, TextRenderer textRenderer) {
@@ -43,8 +47,8 @@ public class EditSession {
         String startText = "START: " + getTriggerHandle(activeStart);
         String endText = "END: " + getTriggerHandle(activeEnd);
 
-        if (pendingStart != activeStart) startText += " → " + getTriggerHandle(pendingStart);
-        if (pendingEnd != activeEnd) endText += " → " + getTriggerHandle(pendingEnd);
+        if (!pendingStart.equals(activeStart)) startText += " → " + getTriggerHandle(pendingStart);
+        if (!pendingEnd.equals(activeEnd)) endText += " → " + getTriggerHandle(pendingEnd);
 
         textRenderer.drawWithShadow(matrixStack, startText, x, y, 0xFFAA00);
         textRenderer.drawWithShadow(matrixStack, endText, x, y + 12, 0xFFAA00);
@@ -56,9 +60,9 @@ public class EditSession {
 
         // extract the hovered block for selection and draw outline
         Color hoverColor = Color.WHITE;
-        if (activeSlot == Trigger.TriggerSlot.START) {
-            hoverColor = new Color(50, 100, 0);
-        } else if (activeSlot == Trigger.TriggerSlot.END) {
+        if (getActiveSlot() == Trigger.TriggerSlot.START) {
+            hoverColor = new Color(0, 100, 50);
+        } else if (getActiveSlot() == Trigger.TriggerSlot.END) {
             hoverColor = new Color(100, 0, 50);
         }
         hoveredPos = getHoveredPos();
@@ -66,27 +70,41 @@ public class EditSession {
             new BlockOutlineRenderer(hoveredPos, hoverColor).render();
         }
 
-        // active block outlines
+        // selected block outlines
         boolean activeShared = TriggersSharePos.check(activeStart, activeEnd);
-        renderTriggerOutline(activeStart, false, new Color(0, 150, 0), 0f);
-        renderTriggerOutline(activeEnd, false, new Color(150, 0, 0), activeShared ? 0.05f : 0f);
+        renderTriggerOutline(activeStart, false, Color.GREEN , 0f);
+        renderTriggerOutline(activeEnd, false, Color.RED, activeShared ? 0.05f : 0f);
 
         // pending block outlines
         boolean pendingShared = TriggersSharePos.check(pendingStart, pendingEnd);
-        renderTriggerOutline(pendingStart, true, Color.GREEN, 0f);
-        renderTriggerOutline(pendingEnd, true, Color.RED, pendingShared ? 0.05f : 0f);
+        boolean startsShare = TriggersSharePos.check(pendingStart, ogStart);
+        boolean endsShare = TriggersSharePos.check(pendingEnd, ogEnd);
 
+        if (pendingStart != null && !startsShare) {
+            renderTriggerOutline(pendingStart, true, new Color(0, 200, 100), 0f);
+        }
+        if (pendingEnd != null && !endsShare) {
+            renderTriggerOutline(pendingEnd, true, new Color(200, 0, 100), pendingShared ? 0.05f : 0f);
+        }
     }
 
     public void selectActive() {
-        if (activeType == null || hoveredPos == null) return;
+        if (activeTrigger == null) return;
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
 
-        switch (activeType) {
+        switch (getActiveType()) {
+            case MAP -> {
+                if (getActiveSlot() == Trigger.TriggerSlot.START) {
+                    pendingStart = new MapTrigger(Trigger.TriggerSlot.START);
+                } else {
+                    pendingEnd = new MapTrigger(Trigger.TriggerSlot.END);
+                }
+            }
             case BLOCK_BREAK -> {
+                if (hoveredPos == null) return;
                 // prevent selection if position already in use
-                Trigger other = activeSlot == Trigger.TriggerSlot.START ? pendingEnd : pendingStart;
+                Trigger other = getActiveSlot() == Trigger.TriggerSlot.START ? pendingEnd : pendingStart;
                 if (other instanceof BlockBreakTrigger bt && hoveredPos.equals(bt.getPos())) {
                     client.player.sendMessage(new LiteralText("block already used by other trigger"), false);
                     return;
@@ -96,45 +114,69 @@ public class EditSession {
                     return;
                 }
 
-                if (activeSlot == Trigger.TriggerSlot.START) {
+                if (getActiveSlot() == Trigger.TriggerSlot.START) {
                     pendingStart = new BlockBreakTrigger(Trigger.TriggerSlot.START, hoveredPos);
                 } else {
                     pendingEnd = new BlockBreakTrigger(Trigger.TriggerSlot.END, hoveredPos);
                 }
-                client.player.sendMessage(new LiteralText("block break selected"), false);
             }
             case POSITION -> {
-                if (activeSlot == Trigger.TriggerSlot.START) {
+                if (hoveredPos == null) return;
+                if (getActiveSlot() == Trigger.TriggerSlot.START) {
                     pendingStart = new PositionTrigger(Trigger.TriggerSlot.START, hoveredPos);
                 } else {
                     pendingEnd = new PositionTrigger(Trigger.TriggerSlot.END, hoveredPos);
                 }
-                client.player.sendMessage(new LiteralText("position selected"), false);
             }
         }
-        client.player.sendMessage(new LiteralText("selection complete"), false);
-
     }
 
-    public void toggleActiveSlot() {
-        if (activeSlot == null) {
-            activeSlot = Trigger.TriggerSlot.START;
-            activeType = pendingStart.getType();
-            return;
-        }
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null) return;
-
-
-        if (activeSlot == Trigger.TriggerSlot.START) {
-            activeSlot = Trigger.TriggerSlot.END;
-            activeType = pendingEnd.getType();
-            client.player.sendMessage(new LiteralText("active: end"), false);
+    public void setActiveSlot(Trigger.TriggerSlot slot) {
+        if (getActiveSlot() == slot) return;
+        Trigger tempTrigger = activeTrigger;
+        if (oldActiveTrigger != null) {
+            activeTrigger = oldActiveTrigger;
         } else {
-            activeSlot = Trigger.TriggerSlot.START;
-            activeType = pendingStart.getType();
-            client.player.sendMessage(new LiteralText("active: start"), false);
+            activeTrigger = slot == Trigger.TriggerSlot.START ? pendingStart : pendingEnd;
         }
+        oldActiveTrigger = tempTrigger;
+    }
+
+    public void setActiveType(Trigger.TriggerType type) {
+        if (activeTrigger == null) return;
+//        if (getActiveSlot() == Trigger.TriggerSlot.START) {
+//            pendingStart = ogStart;
+//        } else {
+//            pendingEnd = ogEnd;
+//        }
+        switch (type) {
+            case MAP -> {
+                if (getActiveSlot() == Trigger.TriggerSlot.START) {
+                    activeTrigger = new MapTrigger(Trigger.TriggerSlot.START);
+                } else {
+                    activeTrigger = new MapTrigger(Trigger.TriggerSlot.END);
+                }
+            }
+            case BLOCK_BREAK -> {
+                if (getActiveSlot() == Trigger.TriggerSlot.START) {
+                    activeTrigger = new BlockBreakTrigger(Trigger.TriggerSlot.START, null);
+                } else {
+                    activeTrigger = new BlockBreakTrigger(Trigger.TriggerSlot.END, null);
+                }
+            }
+            case POSITION -> {
+                if (getActiveSlot() == Trigger.TriggerSlot.START) {
+                    activeTrigger = new PositionTrigger(Trigger.TriggerSlot.START, null);
+                } else {
+                    activeTrigger = new PositionTrigger(Trigger.TriggerSlot.END, null);
+                }
+            }
+        }
+    }
+
+    public void setActiveSlot(Trigger.TriggerSlot slot, Trigger.TriggerType type) {
+        setActiveSlot(slot);
+        setActiveType(type);
     }
 
     public void confirm() {
@@ -146,49 +188,14 @@ public class EditSession {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
         client.player.sendMessage(new LiteralText("editsConfirmed"), false);
-    }
-
-    public void setActiveType(Trigger.TriggerType type) {
-        if (activeSlot == null) {
-            activeSlot = Trigger.TriggerSlot.START;
-        }
-        switch (type) {
-            case MAP -> {
-                if (activeSlot == Trigger.TriggerSlot.START) {
-                    pendingStart = new MapTrigger(Trigger.TriggerSlot.START);
-                    activeType = pendingStart.getType();
-                } else {
-                    pendingEnd = new MapTrigger(Trigger.TriggerSlot.END);
-                    activeType = pendingEnd.getType();
-                }
-            }
-            case BLOCK_BREAK -> {
-                if (activeSlot == Trigger.TriggerSlot.START) {
-                    pendingStart = new BlockBreakTrigger(Trigger.TriggerSlot.START, null);
-                    activeType = pendingStart.getType();
-                } else {
-                    pendingEnd = new BlockBreakTrigger(Trigger.TriggerSlot.END, null);
-                    activeType = pendingEnd.getType();
-                }
-            }
-            case POSITION -> {
-                if (activeSlot == Trigger.TriggerSlot.START) {
-                    pendingStart = new PositionTrigger(Trigger.TriggerSlot.START, null);
-                    activeType = pendingStart.getType();
-                } else {
-                    pendingEnd = new PositionTrigger(Trigger.TriggerSlot.END, null);
-                    activeType = pendingEnd.getType();
-                }
-            }
+        if (client.currentScreen instanceof EditScreen) {
+            client.openScreen(null);
         }
     }
 
-    public void setPendingStart(Trigger trigger) {
-        pendingStart = trigger;
-    }
-
-    public void setPendingEnd(Trigger trigger) {
-        pendingEnd = trigger;
+    public void cancel() {
+        pendingStart = ogStart;
+        pendingEnd = ogEnd;
     }
 
     private String getTriggerHandle(Trigger trigger) {
@@ -228,10 +235,10 @@ public class EditSession {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null || client.world == null) return null;
         if (!(client.crosshairTarget instanceof BlockHitResult hit)) return null;
-        if (activeType == null) return null;
+        if (getActiveType() == null) return null;
 
         // block break: return non-air selected block
-        switch (activeType) {
+        switch (getActiveType()) {
             case BLOCK_BREAK -> {
                 BlockPos pos = hit.getBlockPos();
                 return client.world.getBlockState(pos).isAir() ? null : pos;
@@ -245,33 +252,31 @@ public class EditSession {
     }
 
     public void cycleActiveType() {
-        if (activeType == null) return;
+        if (activeTrigger == null) return;
         Trigger.TriggerType[] types = Trigger.TriggerType.values();
-        if (activeType == null) {
+        if (getActiveType() == null) {
             setActiveType(types[0]);
             return;
         }
-        int next = (activeType.ordinal() + 1) % types.length;
+        int next = (getActiveType().ordinal() + 1) % types.length;
         setActiveType(Trigger.TriggerType.values()[next]);
 
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
-        client.player.sendMessage(new LiteralText("type: " + activeType.name()), false);
+        client.player.sendMessage(new LiteralText("type: " + getActiveType().name()), false);
     }
 
     public boolean hasChanges() {
-        Route current = editSet.getRoute();
-        return pendingStart != current.getStartTrigger()
-                || pendingEnd != current.getEndTrigger();
+        return !pendingStart.equals(ogStart)
+                || !pendingEnd.equals(ogEnd);
     }
 
-    public Trigger getPendingStart() {
-        return pendingStart;
+    public Trigger.TriggerSlot getActiveSlot() {
+        return activeTrigger == null ? null : activeTrigger.getTriggerSlot();
     }
 
-    public Trigger getPendingEnd() {
-        return pendingEnd;
+    public Trigger.TriggerType getActiveType() {
+        return activeTrigger == null ? null : activeTrigger.getType();
     }
-
 
 }

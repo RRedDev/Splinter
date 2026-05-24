@@ -33,4 +33,6 @@ public abstract class Trigger {
     public TriggerSlot getTriggerSlot() {
         return triggerSlot;
     }
+
+    public abstract boolean equals(Object obj);
 }

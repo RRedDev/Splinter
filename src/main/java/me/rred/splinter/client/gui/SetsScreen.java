@@ -59,7 +59,6 @@ public class SetsScreen extends Screen {
     private int list4X;
     private int lastClickX, lastClickY;
 
-
     public SetsScreen() {
         super(new LiteralText("Splinter Sets"));
     }
@@ -88,7 +87,6 @@ public class SetsScreen extends Screen {
         list2X = screenLeft + setsListWidth + borderWidth;
         list3X = list2X + timesListWidth + borderWidth;
         list4X = list3X + timesListWidth + borderWidth;
-
 
         // panels for middle section
         int listHeight = listBottom - listTop;

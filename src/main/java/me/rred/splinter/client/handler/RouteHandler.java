@@ -78,8 +78,13 @@ public class RouteHandler {
         Trigger start = route.getStartTrigger();
         Trigger end = route.getEndTrigger();
         boolean inMap = SplinterClient.ssm.isInMap();
-
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.player == null || client.world == null) return;
+        if (!inMap) {
+            resetFired();
+        }
         if (start.isTriggered() && !startFired) {
+            client.player.sendMessage(new LiteralText("start fired"), false);
             SplinterClient.timer.clear();
             SplinterClient.timer.start();
             start.reset();
@@ -89,15 +94,13 @@ public class RouteHandler {
 
         if (end.isTriggered()) {
             if (SplinterClient.timer.isRunning()) {
+                client.player.sendMessage(new LiteralText("end fired, timer running: " + SplinterClient.timer.isRunning()), false);
                 SplinterClient.timer.stop();
                 long time = SplinterClient.timer.fetchElapsedTime();
                 SplinterClient.setManager.addTime(time);
                 endFired = true;
             }
             end.reset();
-        }
-        if (!inMap) {
-            resetFired();
         }
     }
 
@@ -116,7 +119,7 @@ public class RouteHandler {
             MinecraftClient client = MinecraftClient.getInstance();
             assert client.world != null;
             // end trigger is broken before route starts
-            if (!startFired || client.world.getBlockState(bt.getPos()).isAir()) {
+            if (!startFired) {
                 startFired = true;
                 endFired = true;
                 assert client.player != null;
@@ -133,6 +136,7 @@ public class RouteHandler {
     public void toggleTimer() {
         // don't allow toggling outside of map
         if (!SplinterClient.ssm.isInMap()) return;
+        if (!SplinterClient.ssm.isActive()) return;
 
         if (SplinterClient.timer.isRunning()) {
             SplinterClient.timer.stop();

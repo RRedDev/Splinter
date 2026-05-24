@@ -18,4 +18,8 @@ public class MapTrigger extends Trigger {
     public TriggerType getType() {
         return TriggerType.MAP;
     }
+
+    public boolean equals(Object obj) {
+        return obj instanceof MapTrigger;
+    }
 }

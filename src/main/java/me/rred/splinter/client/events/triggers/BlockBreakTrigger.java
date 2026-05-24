@@ -26,4 +26,13 @@ public class BlockBreakTrigger extends Trigger{
     public void setPos(BlockPos pos) {
         this.pos = pos;
     }
+
+    public boolean equals(Object obj) {
+        if (!(obj instanceof BlockBreakTrigger other)) return false;
+        if (pos != null && other.pos != null) {
+            return pos.equals(other.pos);
+        } else {
+            return pos == null && other.pos == null;
+        }
+    }
 }

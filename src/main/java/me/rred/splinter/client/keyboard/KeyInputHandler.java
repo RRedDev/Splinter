@@ -3,6 +3,7 @@ package me.rred.splinter.client.keyboard;
 import me.rred.splinter.client.EditSession;
 import me.rred.splinter.client.SplinterClient;
 import me.rred.splinter.client.SplinterStateMachine;
+import me.rred.splinter.client.gui.EditScreen;
 import me.rred.splinter.client.gui.SetsScreen;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
@@ -15,23 +16,35 @@ public class KeyInputHandler {
     public static final String CLEAR_SELECTION = "key.splinter.clear_selection";
     public static final String TOGGLE_TIMER = "key.splinter.toggle_timer";
     public static final String GUI_SETS = "key.splinter.gui_sets";
-    public static final String TEMP_TOGGLE_EDIT = "key.splinter.temp_toggle_edit";
     public static final String TEMP_SELECT_ACTIVE = "key.splinter.temp_select_active";
     public static final String TEMP_CONFIRM = "key.splinter.temp_confirm";
     public static final String TEMP_TOGGLE_ACTIVE = "key.splinter.temp_toggle_active";
     public static final String TEMP_CYCLE_TYPE = "key.splinter.temp_cycle_type";
 
+    public static final String TOGGLE_EDIT = "key.splinter.toggle_edit";
+    public static final String GUI_EDIT = "key.splinter.gui_edit";
+    public static final String EDIT_SELECT = "key.splinter.edit_select";
 
     public static KeyBind GUI_SETS_BIND;
+    public static KeyBind GUI_EDIT_BIND;
+
 
 
 
     public static void register() {
         GUI_SETS_BIND = new KeyBind(GUI_SETS, GLFW.GLFW_KEY_B, SetsScreen::toggle);
+        GUI_EDIT_BIND = new KeyBind(GUI_EDIT, GLFW.GLFW_KEY_N, () -> {
+            if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
+                EditSession edit = SplinterClient.ssm.getEditSession();
+                if (edit != null) EditScreen.toggle();
+            }
+        });
 
         KeyBind[] keyBinds = new KeyBind[] {
-                new KeyBind(TOGGLE_TIMER, GLFW.GLFW_KEY_N, SplinterClient.routeHandler::toggleTimer),
-                new KeyBind(TEMP_TOGGLE_EDIT, GLFW.GLFW_KEY_M, () -> {
+                // bastion helper uses O I P K G
+                new KeyBind(TOGGLE_TIMER, GLFW.GLFW_KEY_J, SplinterClient.routeHandler::toggleTimer),
+
+                new KeyBind(TOGGLE_EDIT, GLFW.GLFW_KEY_M, () -> {
                     MinecraftClient client = MinecraftClient.getInstance();
                     if (client.player == null) return;
                     if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
@@ -51,13 +64,6 @@ public class KeyInputHandler {
                     }
                 }),
 
-                new KeyBind(TEMP_TOGGLE_ACTIVE, GLFW.GLFW_KEY_P, () -> {
-                    if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
-                        EditSession edit = SplinterClient.ssm.getEditSession();
-                        if (edit != null) edit.toggleActiveSlot();
-                    }
-                }),
-
                 new KeyBind(TEMP_CYCLE_TYPE, GLFW.GLFW_KEY_O, () -> {
                     if (SplinterClient.ssm.getState() == SplinterStateMachine.State.EDIT) {
                         EditSession edit = SplinterClient.ssm.getEditSession();
@@ -72,7 +78,8 @@ public class KeyInputHandler {
                     }
                 }),
 
-                GUI_SETS_BIND
+                GUI_SETS_BIND,
+                GUI_EDIT_BIND
         };
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
