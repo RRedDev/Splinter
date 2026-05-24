@@ -1,6 +1,7 @@
 package me.rred.splinter.client.timer;
 
 import me.rred.splinter.client.SplinterClient;
+import net.minecraft.client.MinecraftClient;
 import org.lwjgl.system.CallbackI;
 
 public class SplinterTimer {
@@ -12,10 +13,18 @@ public class SplinterTimer {
     private long leastTickTime;
 
     public void tick() {
+        if (!SplinterClient.ssm.isActive()) return;
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.currentScreen != null) return;
+
         if (state == State.RUNNING) {
             activeTicks++;
             leastTickTime = System.currentTimeMillis();
         }
+    }
+
+    public void onResume() {
+        leastTickTime = System.currentTimeMillis();
     }
 
     public void start() {

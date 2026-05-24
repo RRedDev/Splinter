@@ -1,4 +1,4 @@
-package me.rred.splinter.client.gui;
+package me.rred.splinter.client.gui.sets;
 
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.util.math.MatrixStack;

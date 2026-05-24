@@ -1,8 +1,8 @@
-package me.rred.splinter.client.gui;
+package me.rred.splinter.client.gui.sets;
 
-import me.rred.splinter.Splinter;
 import me.rred.splinter.client.SplinterClient;
 import me.rred.splinter.client.sets.SplinterSet;
+import me.rred.splinter.client.utils.TruncateText;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.util.math.MatrixStack;
@@ -43,7 +43,7 @@ public class ContextMenu {
         DrawableHelper.fill(matrixStack, x, y, x + WIDTH, y + totalHeight, 0xFF222222);
 
         // name header
-        textRenderer.drawWithShadow(matrixStack, set.getName(), x + 3, y + 2, 0xAAAAAA);
+        textRenderer.drawWithShadow(matrixStack, TruncateText.truncate(set.getName(), WIDTH - 3, textRenderer), x + 3, y + 2, 0xAAAAAA);
 
         // divider
         DrawableHelper.fill(matrixStack, x, y + ITEM_HEIGHT, x + WIDTH, y + ITEM_HEIGHT + 1, 0x80555555);

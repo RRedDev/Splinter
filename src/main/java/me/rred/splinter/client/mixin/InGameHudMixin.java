@@ -33,11 +33,12 @@ public abstract class InGameHudMixin {
         String stateText = SplinterClient.ssm.getState().toString();
         String setText = SplinterClient.setManager.getActiveSet().getName();
         if (!stateText.equals("IDLE")) {
-            int color = (stateText.equals("ACTIVE")) ? 0x55FF55 : 0xFFAA00;
+            int color = (stateText.equals("ACTIVE")) ? 0x55FF55 : 0xFFBB00;
             String setLabel = setText + " - ";
             int setTextWidth = getFontRenderer().getWidth(setLabel);
             getFontRenderer().drawWithShadow(matrixStack, setLabel, 10, 10, 0xFFFFFF);
             getFontRenderer().drawWithShadow(matrixStack, stateText, 10 + setTextWidth, 10, color);
+
             if (stateText.equals("EDIT")) {
                 EditSession session = SplinterClient.ssm.getEditSession();
                 if (session != null) {

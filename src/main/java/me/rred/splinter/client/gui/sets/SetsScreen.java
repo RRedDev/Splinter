@@ -1,11 +1,12 @@
-package me.rred.splinter.client.gui;
+package me.rred.splinter.client.gui.sets;
 
-import me.rred.splinter.Splinter;
 import me.rred.splinter.client.SplinterClient;
+import me.rred.splinter.client.SplinterStateMachine;
 import me.rred.splinter.client.keyboard.KeyInputHandler;
 import me.rred.splinter.client.sets.SplinterSet;
 import me.rred.splinter.client.utils.SetNameValidation;
 import me.rred.splinter.client.utils.TimerFormatter;
+import me.rred.splinter.client.utils.TruncateText;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.Screen;
@@ -13,11 +14,11 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.LiteralText;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL11;
 
-import java.awt.*;
 import java.util.List;
 
 public class SetsScreen extends Screen {
@@ -75,7 +76,7 @@ public class SetsScreen extends Screen {
 
         // sets UI screen dimensions
         screenTop = offset;
-        screenBottom = height - (int)(offset * 1.5) ;
+        screenBottom = height - (int)(offset * 1.8) ;
         screenLeft = offset;
         screenRight = width - offset;
 
@@ -93,7 +94,24 @@ public class SetsScreen extends Screen {
         setsListPanel = new SetsListPanel(screenLeft, listTop, setsListWidth, listHeight, sets,
                 (set, button) -> {
                         if (button == 0) { // left click
-                            SplinterClient.setManager.setActiveSet(set);
+                            // refresh edit session or send confirm message
+                            if (activeSet != set) {
+                                if (SplinterClient.ssm.isEditingWithChanges()) {
+                                    // editing with changes
+                                    client.player.sendMessage(new LiteralText("confirm or cancel changes in GUI")
+                                            .styled(s -> s.withColor(Formatting.YELLOW)), false);
+                                } else if (SplinterClient.ssm.isEditing()) {
+                                    // just editing, refresh edit session
+                                    SplinterClient.setManager.setActiveSet(set);
+                                    SplinterClient.ssm.refreshEditSession();
+                                } else if (SplinterClient.timer.isRunning()) {
+                                    // timer is running, invalidate the run
+                                    SplinterClient.routeHandler.invalidateRun();
+                                } else {
+                                    // swap set if it's not already active
+                                    SplinterClient.setManager.setActiveSet(set);
+                                }
+                            }
                         } else if (button == 1) { // right click logic
                             // RC + SHIFT or both are full
                             if (hasShiftDown() || (setA != null && setB != null)) {
@@ -174,13 +192,25 @@ public class SetsScreen extends Screen {
         // GUI title text
         drawCenteredText(matrixStack, textRenderer, title, width / 2, 10, textColor);
 
-        // top panel (tabs)
+        // top panel (create button, headers)
         int topPanelColor = 0x952D2D2D;
         fill(matrixStack, screenLeft, screenTop, screenRight, screenTop + tabHeight, topPanelColor);
 
         // middle panel (sets, times, stats)
         int middlePanelColor = 0x80222222;
         fill(matrixStack, screenLeft, listTop, screenRight, listBottom, middlePanelColor);
+
+        // edit mode hint
+        String keybind = KeyInputHandler.TOGGLE_EDIT_BIND.getKeyBinding().getBoundKeyLocalizedText().getString();
+        String editMessage1 = "enter idle mode by";
+        String editMessage2 = "pressing the \"■\" symbol";
+        String editMessage3 = "& enter edit mode with: " + keybind;
+        int textHeight = textRenderer.fontHeight;
+        int vertGap = 3;
+
+        textRenderer.drawWithShadow(matrixStack, editMessage1, list4X + 5, screenBottom - (vertGap + textHeight)* 3, textColor);
+        textRenderer.drawWithShadow(matrixStack, editMessage2, list4X + 5, screenBottom - (vertGap + textHeight) * 2, textColor);
+        textRenderer.drawWithShadow(matrixStack, editMessage3, list4X + 5, screenBottom - (vertGap + textHeight), textColor);// top panel (tabs)
 
         // outer border
         // top
@@ -201,17 +231,22 @@ public class SetsScreen extends Screen {
 
         // headers
         headerTextY = screenTop + (tabHeight - textRenderer.fontHeight + 1) / 2;
-        int setAX = list2X + headerButtonLen + padding;
+        int setAX = list2X + headerButtonLen + 3;
         int setBX = setAX + timesListWidth;
+        int headerWidth = timesListWidth - headerButtonLen - 6;
         int headersBorderColor = outerBorderColor;
         DrawableHelper.fill(matrixStack, screenLeft, listTop, screenRight,  listTop + borderWidth, headersBorderColor);
 
         if (setA != null) {
-            textRenderer.drawWithShadow(matrixStack, setA.getName(), setAX, headerTextY, textColor);
+            textRenderer.drawWithShadow(matrixStack,
+                    TruncateText.truncate(setA.getName(), headerWidth, textRenderer),
+                    setAX, headerTextY, textColor);
         }
 
         if (setB != null) {
-            textRenderer.drawWithShadow(matrixStack, setB.getName(), setBX, headerTextY, textColor);
+            textRenderer.drawWithShadow(matrixStack,
+                    TruncateText.truncate(setB.getName(), headerWidth, textRenderer),
+                    setBX, headerTextY, textColor);
         }
 
         // render middle ListPanels
@@ -285,6 +320,10 @@ public class SetsScreen extends Screen {
             if (keyCode == GLFW.GLFW_KEY_ESCAPE && activeOverlay != Overlay.NONE) {
                 closeOverlay();
                 return true;
+            } else if (KeyInputHandler.GUI_SETS_BIND.getKeyBinding().matchesKey(keyCode, scanCode)
+                    && activeOverlay == Overlay.CREATE) {
+                // don't close create overlay,  might want to use the letter for the name
+                return false;
             }
             SetsScreen.toggle();
             return true;

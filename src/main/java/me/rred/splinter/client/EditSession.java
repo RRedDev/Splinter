@@ -4,7 +4,8 @@ import me.rred.splinter.client.events.triggers.BlockBreakTrigger;
 import me.rred.splinter.client.events.triggers.MapTrigger;
 import me.rred.splinter.client.events.triggers.PositionTrigger;
 import me.rred.splinter.client.events.triggers.Trigger;
-import me.rred.splinter.client.gui.EditScreen;
+import me.rred.splinter.client.gui.edit.EditScreen;
+import me.rred.splinter.client.keyboard.KeyInputHandler;
 import me.rred.splinter.client.rendering.BlockOutlineRenderer;
 import me.rred.splinter.client.sets.SplinterSet;
 import me.rred.splinter.client.utils.TriggersSharePos;
@@ -12,6 +13,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.LiteralText;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 
@@ -20,8 +22,8 @@ import java.awt.*;
 public class EditSession {
     private Trigger activeTrigger;
     private Trigger oldActiveTrigger;
-    private final Trigger ogStart;
-    private final Trigger ogEnd;
+    private Trigger ogStart;
+    private Trigger ogEnd;
     private Trigger pendingStart;
     private Trigger pendingEnd;
     private final SplinterSet editSet;
@@ -41,20 +43,42 @@ public class EditSession {
         int x = 10;
         int y = 25; // below state indicator
 
+        // start and end changes text
+
         Trigger activeStart = editSet.getRoute().getStartTrigger();
         Trigger activeEnd = editSet.getRoute().getEndTrigger();
 
         String startText = "START: " + getTriggerHandle(activeStart);
         String endText = "END: " + getTriggerHandle(activeEnd);
+        int textHeight = textRenderer.fontHeight + 3;
 
         if (!pendingStart.equals(activeStart)) startText += " → " + getTriggerHandle(pendingStart);
         if (!pendingEnd.equals(activeEnd)) endText += " → " + getTriggerHandle(pendingEnd);
 
-        textRenderer.drawWithShadow(matrixStack, startText, x, y, 0xFFAA00);
-        textRenderer.drawWithShadow(matrixStack, endText, x, y + 12, 0xFFAA00);
+        textRenderer.drawWithShadow(matrixStack, startText, x, y, 0xFFBB00);
+        textRenderer.drawWithShadow(matrixStack, endText, x, y + textHeight, 0xFFBB00);
+
+        // confirm message
+        if(hasChanges()) {
+            String confirmMessage = "Changes Made. Confirm or Cancel in GUI";
+            textRenderer.drawWithShadow(matrixStack, confirmMessage, x, y + textHeight * 2, 0xFF6A00);
+        }
+
+        // hotkey tips, gui and selection
+        int gap = 40;
+        // gui open
+        String guiOpenBind = KeyInputHandler.GUI_EDIT_BIND.getKeyBinding().getBoundKeyLocalizedText().getString();
+        String guiOpenText = "Open Edit GUI - " + guiOpenBind;
+        textRenderer.drawWithShadow(matrixStack, guiOpenText, x, y + textHeight + gap, 0xFFBB00);
+        // edit select
+        // edit mode hint
+        String editSelectBind = KeyInputHandler.EDIT_SELECT_BIND.getKeyBinding().getBoundKeyLocalizedText().getString();
+        String editSelectText = "Select Edit - " + editSelectBind;
+        textRenderer.drawWithShadow(matrixStack, editSelectText, x, y + textHeight * 2 + gap, 0xFFBB00);
     }
 
     public void renderOutlines() {
+        if (!SplinterClient.ssm.isInMap()) return;
         Trigger activeStart = editSet.getRoute().getStartTrigger();
         Trigger activeEnd = editSet.getRoute().getEndTrigger();
 
@@ -106,11 +130,13 @@ public class EditSession {
                 // prevent selection if position already in use
                 Trigger other = getActiveSlot() == Trigger.TriggerSlot.START ? pendingEnd : pendingStart;
                 if (other instanceof BlockBreakTrigger bt && hoveredPos.equals(bt.getPos())) {
-                    client.player.sendMessage(new LiteralText("block already used by other trigger"), false);
+                    client.player.sendMessage( new LiteralText("block already used by other trigger")
+                            .styled(s -> s.withColor(Formatting.RED)), false);
                     return;
                 }
                 if (other instanceof PositionTrigger pt && hoveredPos.equals(pt.getPos())) {
-                    client.player.sendMessage(new LiteralText("block already used by other trigger"), false);
+                    client.player.sendMessage( new LiteralText("block already used by other trigger")
+                            .styled(s -> s.withColor(Formatting.RED)), false);
                     return;
                 }
 
@@ -181,13 +207,14 @@ public class EditSession {
 
     public void confirm() {
         if (pendingStart == null || pendingEnd == null) return;
+        ogStart = pendingStart;
+        ogEnd = pendingEnd;
         editSet.getRoute().setStartTrigger(pendingStart);
         editSet.getRoute().setEndTrigger(pendingEnd);
         SplinterClient.ssm.setIdle();
 
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
-        client.player.sendMessage(new LiteralText("editsConfirmed"), false);
         if (client.currentScreen instanceof EditScreen) {
             client.openScreen(null);
         }
@@ -249,21 +276,6 @@ public class EditSession {
             }
         }
         return null;
-    }
-
-    public void cycleActiveType() {
-        if (activeTrigger == null) return;
-        Trigger.TriggerType[] types = Trigger.TriggerType.values();
-        if (getActiveType() == null) {
-            setActiveType(types[0]);
-            return;
-        }
-        int next = (getActiveType().ordinal() + 1) % types.length;
-        setActiveType(Trigger.TriggerType.values()[next]);
-
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.player == null) return;
-        client.player.sendMessage(new LiteralText("type: " + getActiveType().name()), false);
     }
 
     public boolean hasChanges() {

@@ -43,10 +43,24 @@ public class RouteHandler {
 
     public void onMapTickUpdated(int tick) {
         if (!SplinterClient.ssm.isActive()) return;
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null) return;
 
         Route route = SplinterClient.setManager.getActiveSet().getRoute();
         Trigger start = route.getStartTrigger();
         Trigger end = route.getEndTrigger();
+
+        // check for decayed block break triggers, this is only run during inMap time
+        if (start instanceof BlockBreakTrigger bt && bt.getPos() != null
+                && !startFired && client.world.getBlockState(bt.getPos()).isAir()) {
+            invalidateRun(client, "starting");
+            return;
+        }
+        if (end instanceof BlockBreakTrigger bt && bt.getPos() != null
+                && startFired && !endFired && client.world.getBlockState(bt.getPos()).isAir()) {
+            invalidateRun(client, "ending");
+            return;
+        }
 
         if (start instanceof MapTrigger mt) mt.mapTick(tick);
         if (end instanceof MapTrigger mt) mt.mapTick(tick);
@@ -84,7 +98,6 @@ public class RouteHandler {
             resetFired();
         }
         if (start.isTriggered() && !startFired) {
-            client.player.sendMessage(new LiteralText("start fired"), false);
             SplinterClient.timer.clear();
             SplinterClient.timer.start();
             start.reset();
@@ -94,7 +107,6 @@ public class RouteHandler {
 
         if (end.isTriggered()) {
             if (SplinterClient.timer.isRunning()) {
-                client.player.sendMessage(new LiteralText("end fired, timer running: " + SplinterClient.timer.isRunning()), false);
                 SplinterClient.timer.stop();
                 long time = SplinterClient.timer.fetchElapsedTime();
                 SplinterClient.setManager.addTime(time);
@@ -123,7 +135,8 @@ public class RouteHandler {
                 startFired = true;
                 endFired = true;
                 assert client.player != null;
-                client.player.sendMessage(new LiteralText("trial stopped due to premature ending trigger").styled(s -> s.withColor(Formatting.RED)), false);
+                client.player.sendMessage( new LiteralText("trial stopped due to premature ending trigger")
+                        .styled(s -> s.withColor(Formatting.RED)), false);
                 SplinterClient.timer.clear();
                 return;
             }
@@ -154,12 +167,32 @@ public class RouteHandler {
 
     private void renderTriggerOutline(Trigger trigger, boolean fired, Color color, float padding) {
         if (fired) return;
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null || client.player == null) return;
+
         if (trigger instanceof BlockBreakTrigger bt && bt.getPos() != null) {
             new BlockOutlineRenderer(bt.getPos(), color, padding).render();
         }
         if (trigger instanceof PositionTrigger pt && pt.getPos() != null) {
             new BlockOutlineRenderer(pt.getPos(), color, padding).render();
         }
+    }
+
+    private void invalidateRun(MinecraftClient client, String triggerName) {
+        startFired = true;
+        endFired = true;
+        SplinterClient.timer.clear();
+        if (client.player != null) {
+            client.player.sendMessage(new LiteralText("trial stopped due to broken " + triggerName + " trigger. " +
+                    "you may want to edit the route")
+                    .styled(s -> s.withColor(Formatting.RED)), false);
+        }
+    }
+
+    public void invalidateRun() {
+        startFired = true;
+        endFired = true;
+        SplinterClient.timer.clear();
     }
 
     public void onWorldJoin() {

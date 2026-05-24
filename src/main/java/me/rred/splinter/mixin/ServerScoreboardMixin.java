@@ -13,12 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ServerScoreboardMixin {
     @Inject(method = "updateScore", at = @At("HEAD"))
     private void onScoreUpdate(ScoreboardPlayerScore score, CallbackInfo ci) {
-        //Splinter.LOGGER.info("score update fired: {}", score.getObjective() != null ? score.getObjective().getName() : "null");
-
         if (!score.getObjective().getName().equals("timer.temp")) return;
-//        Splinter.LOGGER.info("timer.temp player: '{}', score: {}",
-//                score.getPlayerName(), score.getScore());
-        if(!score.getPlayerName().equals("tick")) return;
+        if (!score.getPlayerName().equals("tick")) return;
 
         int value = score.getScore();
         SplinterClient.routeHandler.onMapTickUpdated(value);
@@ -27,8 +23,6 @@ public class ServerScoreboardMixin {
         if (inMap != SplinterClient.ssm.isInMap()) {
             SplinterClient.ssm.setInMap(inMap);
         }
-
-        // notify trigger
     }
 
 }

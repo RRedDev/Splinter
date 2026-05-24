@@ -2,6 +2,9 @@ package me.rred.splinter.client;
 
 import me.rred.splinter.Splinter;
 import me.rred.splinter.client.route.Route;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.LiteralText;
+import net.minecraft.util.Formatting;
 
 public class SplinterStateMachine {
     public enum State {
@@ -22,29 +25,47 @@ public class SplinterStateMachine {
         if (state == State.IDLE) {
             state = State.ACTIVE;
             SplinterClient.routeHandler.resetFired();
-            Splinter.LOGGER.info("SSM: switched to ACTIVE");
             // begin listening for events
         }
         // eventually allow active -> edit possibly
     }
 
     public void setIdle() {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null || client.player == null) return;
+
         if (state != State.IDLE) {
+            if (state == State.EDIT && editSession.hasChanges()) {
+                client.player.sendMessage( new LiteralText("confirm or cancel changes in GUI")
+                        .styled(s -> s.withColor(Formatting.YELLOW)), false);
+                return;
+            }
             state = State.IDLE;
             SplinterClient.timer.clear();
             editSession = null;
-            Splinter.LOGGER.info("SSM: switched to IDLE");
         }
         // stop listening, clear highlights
     }
 
     public void setEdit() {
-        if (state == State.ACTIVE) return; // can't start running while making changes
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.world == null || client.player == null) return;
+
+        if (state == State.ACTIVE) {
+            client.player.sendMessage( new LiteralText("can't edit in active mode. see sets GUI")
+                    .styled(s -> s.withColor(Formatting.RED)), false);
+            return; // can't start running while making changes
+        }
         if (state == State.IDLE) {
             state = State.EDIT;
             editSession = new EditSession(SplinterClient.setManager.getActiveSet());
-            Splinter.LOGGER.info("SSM: switched to EDIT");
             // display set UI
+        }
+    }
+
+    public void refreshEditSession() {
+        if (state == State.EDIT) {
+            editSession = new EditSession(SplinterClient.setManager.getActiveSet());
         }
     }
 
@@ -55,6 +76,12 @@ public class SplinterStateMachine {
     public boolean isActive() {
         return state == State.ACTIVE;
     }
+
+    public boolean isIdle() {return state == State.IDLE;}
+
+    public boolean isEditing() {return state == State.EDIT;}
+
+    public boolean isEditingWithChanges() { return state == State.EDIT && editSession.hasChanges(); }
 
     public void setInMap(boolean inMap) {
         this.inMap = inMap;

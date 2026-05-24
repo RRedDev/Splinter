@@ -21,12 +21,7 @@ public class SetManager {
     }
 
     public void addTime(long ms) {
-        Splinter.LOGGER.info("adding time to active set: {}", activeSet.getName());
         activeSet.addTime(ms);
-    }
-
-    public void removeTime(int idx) {
-        activeSet.removeTime(idx);
     }
 
     public void createSet(String name) {

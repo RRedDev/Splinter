@@ -1,4 +1,4 @@
-package me.rred.splinter.client.gui;
+package me.rred.splinter.client.gui.edit;
 
 import me.rred.splinter.client.EditSession;
 import me.rred.splinter.client.SplinterClient;
