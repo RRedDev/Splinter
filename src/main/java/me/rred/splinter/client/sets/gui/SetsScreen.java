@@ -1,7 +1,6 @@
-package me.rred.splinter.client.gui.sets;
+package me.rred.splinter.client.sets.gui;
 
 import me.rred.splinter.client.SplinterClient;
-import me.rred.splinter.client.SplinterStateMachine;
 import me.rred.splinter.client.keyboard.KeyInputHandler;
 import me.rred.splinter.client.sets.SplinterSet;
 import me.rred.splinter.client.utils.SetNameValidation;

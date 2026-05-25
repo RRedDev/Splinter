@@ -1,7 +1,6 @@
 package me.rred.splinter.client.sets;
 
-import me.rred.splinter.Splinter;
-import me.rred.splinter.client.route.Route;
+import me.rred.splinter.client.routing.Route;
 
 import java.util.ArrayList;
 import java.util.List;

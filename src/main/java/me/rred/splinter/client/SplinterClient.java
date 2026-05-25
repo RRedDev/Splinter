@@ -1,6 +1,6 @@
 package me.rred.splinter.client;
 
-import me.rred.splinter.client.handler.RouteHandler;
+import me.rred.splinter.client.routing.RouteHandler;
 import me.rred.splinter.client.keyboard.KeyInputHandler;
 import me.rred.splinter.client.sets.SetManager;
 import me.rred.splinter.client.timer.SplinterTimer;

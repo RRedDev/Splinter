@@ -2,7 +2,7 @@ package me.rred.splinter.client.timer;
 
 import me.rred.splinter.client.SplinterClient;
 import net.minecraft.client.MinecraftClient;
-import org.lwjgl.system.CallbackI;
+import net.minecraft.client.gui.screen.Screen;
 
 public class SplinterTimer {
     private enum State {IDLE, RUNNING, STOPPED}
@@ -15,16 +15,16 @@ public class SplinterTimer {
     public void tick() {
         if (!SplinterClient.ssm.isActive()) return;
         MinecraftClient client = MinecraftClient.getInstance();
-        if (client.currentScreen != null) return;
+
+        Screen screen = client.currentScreen;
+
+        // pause timer if the screen itself says it should pause the game
+        if (screen != null && screen.isPauseScreen()) return;
 
         if (state == State.RUNNING) {
             activeTicks++;
             leastTickTime = System.currentTimeMillis();
         }
-    }
-
-    public void onResume() {
-        leastTickTime = System.currentTimeMillis();
     }
 
     public void start() {

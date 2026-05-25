@@ -1,13 +1,12 @@
 package me.rred.splinter.client.keyboard;
 
-import me.rred.splinter.client.EditSession;
+import me.rred.splinter.client.edit.EditSession;
 import me.rred.splinter.client.SplinterClient;
 import me.rred.splinter.client.SplinterStateMachine;
-import me.rred.splinter.client.gui.edit.EditScreen;
-import me.rred.splinter.client.gui.sets.SetsScreen;
+import me.rred.splinter.client.edit.gui.EditScreen;
+import me.rred.splinter.client.sets.gui.SetsScreen;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.widget.TextFieldWidget;
 import org.lwjgl.glfw.GLFW;
 
 public class KeyInputHandler {

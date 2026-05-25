@@ -1,7 +1,7 @@
 package me.rred.splinter.client;
 
-import me.rred.splinter.Splinter;
-import me.rred.splinter.client.route.Route;
+import me.rred.splinter.client.edit.EditSession;
+import me.rred.splinter.client.routing.Route;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;

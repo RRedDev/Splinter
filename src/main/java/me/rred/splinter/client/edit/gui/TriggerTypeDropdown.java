@@ -1,4 +1,4 @@
-package me.rred.splinter.client.gui.edit;
+package me.rred.splinter.client.edit.gui;
 
 import me.rred.splinter.client.events.triggers.Trigger;
 import net.minecraft.client.font.TextRenderer;

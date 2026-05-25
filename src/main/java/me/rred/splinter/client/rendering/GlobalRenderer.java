@@ -2,7 +2,7 @@ package me.rred.splinter.client.rendering;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
-import me.rred.splinter.client.EditSession;
+import me.rred.splinter.client.edit.EditSession;
 import me.rred.splinter.client.SplinterClient;
 import me.rred.splinter.client.SplinterStateMachine;
 import net.minecraft.client.util.math.MatrixStack;

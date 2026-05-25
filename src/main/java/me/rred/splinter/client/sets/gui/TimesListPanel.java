@@ -1,4 +1,4 @@
-package me.rred.splinter.client.gui.sets;
+package me.rred.splinter.client.sets.gui;
 
 import me.rred.splinter.client.sets.SplinterSet;
 import me.rred.splinter.client.utils.TimerFormatter;

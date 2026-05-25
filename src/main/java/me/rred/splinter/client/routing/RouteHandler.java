@@ -1,6 +1,5 @@
-package me.rred.splinter.client.handler;
+package me.rred.splinter.client.routing;
 
-import me.rred.splinter.Splinter;
 import me.rred.splinter.client.SplinterClient;
 import me.rred.splinter.client.SplinterStateMachine;
 import me.rred.splinter.client.events.triggers.BlockBreakTrigger;
@@ -8,10 +7,7 @@ import me.rred.splinter.client.events.triggers.MapTrigger;
 import me.rred.splinter.client.events.triggers.PositionTrigger;
 import me.rred.splinter.client.events.triggers.Trigger;
 import me.rred.splinter.client.rendering.BlockOutlineRenderer;
-import me.rred.splinter.client.route.Route;
-import me.rred.splinter.client.timer.SplinterTimer;
 import me.rred.splinter.client.utils.TriggersSharePos;
-import net.minecraft.block.Block;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Formatting;

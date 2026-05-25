@@ -1,10 +1,11 @@
-package me.rred.splinter.client;
+package me.rred.splinter.client.edit;
 
+import me.rred.splinter.client.SplinterClient;
 import me.rred.splinter.client.events.triggers.BlockBreakTrigger;
 import me.rred.splinter.client.events.triggers.MapTrigger;
 import me.rred.splinter.client.events.triggers.PositionTrigger;
 import me.rred.splinter.client.events.triggers.Trigger;
-import me.rred.splinter.client.gui.edit.EditScreen;
+import me.rred.splinter.client.edit.gui.EditScreen;
 import me.rred.splinter.client.keyboard.KeyInputHandler;
 import me.rred.splinter.client.rendering.BlockOutlineRenderer;
 import me.rred.splinter.client.sets.SplinterSet;
