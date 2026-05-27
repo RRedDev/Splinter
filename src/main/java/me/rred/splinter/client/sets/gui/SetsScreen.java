@@ -4,6 +4,7 @@ import me.rred.splinter.client.SplinterClient;
 import me.rred.splinter.client.keyboard.KeyInputHandler;
 import me.rred.splinter.client.routing.Route;
 import me.rred.splinter.client.sets.SplinterSet;
+import me.rred.splinter.client.utils.ScissorUtil;
 import me.rred.splinter.client.utils.SetNameValidation;
 import me.rred.splinter.client.utils.TimerFormatter;
 import me.rred.splinter.client.utils.TruncateText;
@@ -267,12 +268,17 @@ public class SetsScreen extends Screen {
         }
 
         // render middle ListPanels
-        enableScissor();
+
+        double scale = client.getWindow().getScaleFactor();
+        int scissorWidth = screenRight - screenLeft;
+        int scissorHeight = listBottom - listTop;
+
+        ScissorUtil.enable(scale, screenLeft, listTop, scissorWidth, scissorHeight);
         boolean showSetsHover = !contextMenu.isVisible();
         setsListPanel.render(matrixStack, textRenderer, mouseX, mouseY, showSetsHover);
         timesListPanelA.render(matrixStack, textRenderer, mouseX, mouseY, false);
         timesListPanelB.render(matrixStack, textRenderer, mouseX, mouseY, false);
-        disableScissor();
+        ScissorUtil.disable();
 
         // render context menu
         if (contextMenu.isVisible()) {
@@ -463,7 +469,6 @@ public class SetsScreen extends Screen {
                     confirmButton.active = true;
                 }
 
-                assert client != null;
                 client.getTextureManager().bindTexture(WARNING_ICON);
                 DrawableHelper.drawTexture(matrixStack, imgX, imgY, 0, 0, imgSquish, imgSquish, imgSize, imgSize);
             }
@@ -484,21 +489,6 @@ public class SetsScreen extends Screen {
         } else if (activeOverlay == Overlay.CLEAR) {
             drawCenteredText(matrixStack, textRenderer, new LiteralText("Clear all times?"), width / 2, overlayY + 10, textColor);
         }
-    }
-
-    private void enableScissor() {
-        double scale = client.getWindow().getScaleFactor();
-        int scissorX = 0;
-        int scissorY = (int)((height - listBottom) * scale);
-        int scissorW = (int)((width * scale));
-        int scissorH = (int)((listBottom - listTop) * scale);
-
-        GL11.glEnable(GL11.GL_SCISSOR_TEST);
-        GL11.glScissor(scissorX, scissorY, scissorW, scissorH);
-    }
-
-    private void disableScissor() {
-        GL11.glDisable(GL11.GL_SCISSOR_TEST);
     }
 
     private void openCreateOverlay() {
@@ -630,6 +620,7 @@ public class SetsScreen extends Screen {
 
     public static void toggle() {
         MinecraftClient client = MinecraftClient.getInstance();
+        assert(client != null);
         if (client.currentScreen instanceof SetsScreen) {
             client.openScreen(null);
         } else {
