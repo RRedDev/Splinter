@@ -213,7 +213,7 @@ public class SetsScreen extends Screen {
         int vertGap = 3;
         int hintGap = 10;
         // context menu hint
-        String menuHintText1 = "Ctrl + Right Mouse";
+        String menuHintText1 = "Shift + Right Mouse";
         String menuHintText2 = "to open set context menu";
 
         textRenderer.drawWithShadow(matrixStack, menuHintText1, list4X + 5, screenBottom - hintGap - (vertGap + textHeight) * 5, textColor);
