@@ -3,11 +3,8 @@ package me.rred.splinter.client;
 import me.rred.splinter.client.edit.EditSession;
 import me.rred.splinter.client.edit.gui.EditHud;
 import me.rred.splinter.client.keyboard.KeyInputHandler;
-import me.rred.splinter.client.utils.ColorUtils;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.LiteralText;
-import net.minecraft.util.Formatting;
 
 public class StateHud {
     private static boolean hintConsumed = false;

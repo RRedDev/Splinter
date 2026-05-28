@@ -40,7 +40,7 @@ Fabric API 0.18.0 build 387: https://modrinth.com/mod/fabric-api/versions?g=1.16
 - Unlimited active sets / Intermediary splits (splits between START and END)
 - Set moving / rework general (drag n drop)
 - Piglin Stats (Pig count, Barter Splits, Trade start/end)
-- Barter triggers / Piglin-based triggers
+- Barter triggers / Piglin-based triggers / Block Place triggers
 - Customizable UI (block outline, timer, GUIs, HUD)
 - Edit mode redesign (maybe some keybind overwrites / scroll wheel for more intuitive controls)
 - ? Stay in edit mode after confirm

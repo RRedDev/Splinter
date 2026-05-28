@@ -88,7 +88,6 @@ public class ContextMenu {
     }
 
     public boolean handleClick(double mouseX, double mouseY) {
-        if (!visible) return false;
         if (hoveredOption >= 0 && hoveredOption < options.size()) {
             options.get(hoveredOption).action.run();
             close();
