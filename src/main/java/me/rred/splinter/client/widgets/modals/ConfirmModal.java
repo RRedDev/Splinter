@@ -6,11 +6,11 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.LiteralText;
+import org.lwjgl.glfw.GLFW;
 
 import static net.minecraft.client.gui.DrawableHelper.fill;
 
 public class ConfirmModal extends SplinterModal{
-    private final String message;
     private final Runnable onConfirm;
 
     public ConfirmModal(String message, Runnable onConfirm) {
@@ -35,7 +35,7 @@ public class ConfirmModal extends SplinterModal{
 
         confirmButton = new SplinterButton(buttonX, buttonY, buttonWidth, buttonHeight,
                 new LiteralText("CONFIRM"),
-                onConfirm::run
+                onConfirm
                 );
     }
 
@@ -55,12 +55,20 @@ public class ConfirmModal extends SplinterModal{
     }
 
     public boolean handleClick(double mouseX, double mouseY, int button) {
-        if (confirmButton != null) confirmButton.mouseClicked(mouseX, mouseY, button);
-        visible = false;
-        return true;
+        if (confirmButton != null && confirmButton.mouseClicked(mouseX, mouseY, button)) {
+            close();
+            return true;
+        }
+        return false;
     }
 
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            close();
+            return true;
+        }
         return false;
     }
+
+
 }

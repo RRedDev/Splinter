@@ -3,7 +3,9 @@ package me.rred.splinter.client.sets.gui;
 import me.rred.splinter.Splinter;
 import me.rred.splinter.client.SplinterClient;
 import me.rred.splinter.client.keyboard.KeyInputHandler;
+import me.rred.splinter.client.routing.Route;
 import me.rred.splinter.client.widgets.modals.ConfirmModal;
+import me.rred.splinter.client.widgets.modals.InputModal;
 import me.rred.splinter.client.widgets.modals.SplinterModal;
 import me.rred.splinter.client.sets.SplinterSet;
 import me.rred.splinter.client.utils.ScissorUtil;
@@ -122,26 +124,53 @@ public class SetsScreen extends Screen {
                             if (hasShiftDown() || (setA != null && setB != null)) {
                                 // context menu
                                 contextMenu.open(lastClickX, lastClickY, set, List.of(
-//                                        new ContextMenu.Option("Set as A", () -> {
-//                                            SplinterClient.setManager.setDisplayedSetA(set);
-//                                            init();
-//                                        }, 0xFFFFFF,
-//                                                SplinterClient.setManager.getDisplayedSetA() != set),
-//                                        new ContextMenu.Option("Set as B", () -> {
-//                                            SplinterClient.setManager.setDisplayedSetB(set);
-//                                            init();
-//                                        }, 0xFFFFFF,
-//                                                SplinterClient.setManager.getDisplayedSetB() != set),
-//                                        new ContextMenu.Option("Rename", () -> openRenameOverlay(set), 0xFFFFFF, true),
-//                                        new ContextMenu.Option("Clear", () -> openClearOverlay(set), 0xFFFFFF, !set.isEmpty()),
-//                                        new ContextMenu.Option("Duplicate", () -> {
-//                                            SplinterSet duplicate = new SplinterSet("Copy of " + set.getName(), false, new Route(set.getRoute()));
-//                                            SplinterClient.setManager.addSet(duplicate);
-//                                            init();
-//                                            },
-//                                                0xFFFFFF,
-//                                                true),
-//                                        new ContextMenu.Option("Delete", () -> openRemoveOverlay(set), 0xFF5555, !set.isGeneral())
+                                        new ContextMenu.Option("Set as A", () -> {
+                                            SplinterClient.setManager.setDisplayedSetA(set);
+                                            init();
+                                        }, 0xFFFFFF,
+                                                SplinterClient.setManager.getDisplayedSetA() != set),
+                                        new ContextMenu.Option("Set as B", () -> {
+                                            SplinterClient.setManager.setDisplayedSetB(set);
+                                            init();
+                                        }, 0xFFFFFF,
+                                                SplinterClient.setManager.getDisplayedSetB() != set),
+                                        new ContextMenu.Option("Rename", () -> {
+                                            activeModal = new InputModal("Rename Set", () -> {
+                                                if(activeModal instanceof InputModal im) {
+                                                    String name = im.getTextInput();
+                                                    if (name == null || name.isEmpty()) return;
+                                                    activeSet.renameSet(name);
+                                                }
+                                                activeModal = null;
+                                                init();
+                                            });
+                                            String setName = activeSet.getName();
+                                            activeModal.setSubmessage(setName);
+                                            activeModal.openModal(width, height);
+                                        }, 0xFFFFFF, true),
+                                        new ContextMenu.Option("Clear", () -> {
+                                            activeModal = new ConfirmModal("Clear Times?", () -> {
+                                                activeSet.clearSet();
+                                                activeModal = null;
+                                                init();
+                                            });
+                                            activeModal.openModal(width, height);
+                                        }, 0xFFFFFF, !set.isEmpty()),
+                                        new ContextMenu.Option("Duplicate", () -> {
+                                            SplinterSet duplicate = new SplinterSet("Copy of " + set.getName(), false, new Route(set.getRoute()));
+                                            SplinterClient.setManager.addSet(duplicate);
+                                            init();
+                                            },
+                                                0xFFFFFF,
+                                                true),
+                                        new ContextMenu.Option("Delete", () -> {
+                                            activeModal = new ConfirmModal("Are You Sure?", () -> {
+                                                SplinterClient.setManager.deleteSet(set);
+                                                activeModal = null;
+                                                init();
+                                            });
+                                            activeModal.openModal(width, height);
+                                        }, 0xFF5555, !set.isGeneral())
                                 ));
                             } else if (setA == null && setB != set) {
                                 SplinterClient.setManager.setDisplayedSetA(set);
@@ -164,8 +193,12 @@ public class SetsScreen extends Screen {
         addButton(new ButtonWidget(screenLeft, screenTop, createButtonWidth, createButtonHeight,
                 new LiteralText("NEW SET"),
                 button -> {
-                    activeModal = new ConfirmModal("temp modal!", () -> {
-                        Splinter.LOGGER.info("temp message");
+                    activeModal = new InputModal("Choose Set Name", () -> {
+                        if(activeModal instanceof InputModal im) {
+                            String name = im.getTextInput();
+                            if (name == null || name.isEmpty()) return;
+                            SplinterClient.setManager.createSet(name);
+                        }
                         activeModal = null;
                         init();
                     });
@@ -334,10 +367,10 @@ public class SetsScreen extends Screen {
         lastClickX = (int) mouseX;
         lastClickY = (int) mouseY;
 
-        if (activeModal instanceof ConfirmModal cm) return cm.handleClick(mouseX, mouseY, button);
-        // overlays get first priority
-        if (activeOverlay != Overlay.NONE) {
-            return super.mouseClicked(mouseX, mouseY, button);
+        if (activeModal != null) {
+            boolean pressed = activeModal.handleClick(mouseX, mouseY, button);
+            if (activeModal != null && !activeModal.isVisible()) activeModal = null;
+            return pressed;
         }
 
         // context menu gets priority over setlist
@@ -356,25 +389,24 @@ public class SetsScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // pass input to activeModal
+        if (activeModal != null) {
+            boolean pressed = activeModal.keyPressed(keyCode, scanCode, modifiers);
+            if (!activeModal.isVisible()) activeModal = null;
+            return pressed;
+        }
         // leave screen with Esc or specified hotkey
         if (keyCode == GLFW.GLFW_KEY_ESCAPE || KeyInputHandler.GUI_SETS_BIND.getKeyBinding().matchesKey(keyCode, scanCode)) {
-            // close overlay instead of screen
-            if (keyCode == GLFW.GLFW_KEY_ESCAPE && activeOverlay != Overlay.NONE) {
-//                closeOverlay();
-                return true;
-            } else if (KeyInputHandler.GUI_SETS_BIND.getKeyBinding().matchesKey(keyCode, scanCode)
-                    && (activeOverlay == Overlay.CREATE || activeOverlay == Overlay.RENAME)) {
-                // don't close create overlay,  might want to use the letter for the name
-                return false;
-            }
             SetsScreen.toggle();
             return true;
         }
-        // pass input into the CREATE Overlay text field
-        if ((activeOverlay == Overlay.CREATE || activeOverlay == Overlay.RENAME) && createNameField != null) {
-            return createNameField.keyPressed(keyCode, scanCode, modifiers);
-        }
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean charTyped(char chr, int keyCode) {
+        if (activeModal != null) return activeModal.charTyped(chr, keyCode);
+        return super.charTyped(chr, keyCode);
     }
 
     private void renderStats(MatrixStack matrixStack) {
@@ -457,181 +489,6 @@ public class SetsScreen extends Screen {
         }
 
     }
-
-//    private void renderOverlay(MatrixStack matrixStack) {
-//        // should probably refactor overlays eventually, they are very ugly
-//        fill(matrixStack, overlayX, overlayY, overlayX + overlayWidth, overlayY + overlayHeight, 0xFF222222);
-//
-//        if (activeOverlay == Overlay.CREATE) {
-//            // check if the confirm button should be active
-//            if (createNameField != null && confirmButton != null) {
-//                String name = createNameField.getText().trim();
-//                confirmButton.active = SetNameValidation.isValid(name);
-//            }
-//
-//            drawCenteredText(matrixStack, textRenderer, new LiteralText("Name your set"), width / 2, overlayY + 5, textColor);
-//            if (createNameField != null) {
-//                createNameField.render(matrixStack, 0, 0, 0);
-//            }
-//        } else if (activeOverlay == Overlay.REMOVE) {
-//            if (showWarningIcon) {
-//                int imgSquish = 80;
-//                int imgSize = 80;
-//                int imgX = (width - imgSize) / 2;
-//                int imgY = overlayY - imgSize - 4;
-//
-//                if (confirmButton != null) {
-//                    confirmButton.active = true;
-//                }
-//
-//                client.getTextureManager().bindTexture(WARNING_ICON);
-//                DrawableHelper.drawTexture(matrixStack, imgX, imgY, 0, 0, imgSquish, imgSquish, imgSize, imgSize);
-//            }
-//            drawCenteredText(matrixStack, textRenderer, new LiteralText("Are you sure?"), width / 2, overlayY + 10, textColor);
-//        } else if (activeOverlay == Overlay.RENAME) {
-//            // check if the confirm button should be active
-//            if (createNameField != null && confirmButton != null) {
-//                String name = createNameField.getText().trim();
-//                confirmButton.active = SetNameValidation.isValid(name);
-//            }
-//            drawCenteredText(matrixStack, textRenderer, new LiteralText("Rename set"), width / 2, overlayY + 5, textColor);
-//            if (createNameField != null) {
-//                // show current name above text field
-//                String currentName = "\"" + overlayTargetSet.getName() + "\"";
-//                drawCenteredText(matrixStack, textRenderer, new LiteralText(currentName), width / 2, overlayY + 18, 0xAAAAAA);
-//                createNameField.render(matrixStack, 0, 0, 0);
-//            }
-//        } else if (activeOverlay == Overlay.CLEAR) {
-//            drawCenteredText(matrixStack, textRenderer, new LiteralText("Clear all times?"), width / 2, overlayY + 10, textColor);
-//        }
-//    }
-//
-//    private void openCreateOverlay() {
-//        activeOverlay = Overlay.CREATE;
-//
-//        int inputWidth = 130;
-//        int inputHeight = 12;
-//        int inputX = (width - inputWidth) / 2;
-//        int inputY = overlayY + 20;
-//
-//        createNameField = new TextFieldWidget(textRenderer, inputX, inputY, inputWidth, inputHeight, new LiteralText(""));
-//        createNameField.setMaxLength(20);
-//        createNameField.setFocusUnlocked(true);
-//        children.add(createNameField);
-//
-//        int confirmWidth = 60;
-//        int confirmHeight = 20;
-//        int confirmX = (width - confirmWidth) / 2; // centered
-//        int confirmY = inputY + inputHeight + 8;
-//
-//        confirmButton = new ButtonWidget(confirmX, confirmY, confirmWidth, confirmHeight,
-//                new LiteralText("CONFIRM"),
-//                button-> {
-//                    if (createNameField == null) return;
-//                    String name = createNameField.getText().trim();
-//                    if(!name.isEmpty()) {
-//                        SplinterClient.setManager.createSet(name);
-//                        closeOverlay();
-//                    }
-//
-//                }
-//                );
-//        addButton(confirmButton);
-//    }
-//
-//    private void openRemoveOverlay(SplinterSet set) {
-//        showWarningIcon = Math.random() < 0.01; // 1% nolan
-//        activeOverlay = Overlay.REMOVE;
-//
-//        int confirmWidth = 60;
-//        int confirmHeight = 20;
-//        int confirmX = (width - confirmWidth) / 2; // centered
-//        int confirmY = overlayY + 32;
-//
-//        confirmButton = new ButtonWidget(confirmX, confirmY, confirmWidth, confirmHeight,
-//                new LiteralText("CONFIRM"),
-//                button-> {
-//                    SplinterClient.setManager.deleteSet(set);
-//                    closeOverlay();
-//                }
-//        );
-//        addButton(confirmButton);
-//    }
-//
-//    private void openRenameOverlay(SplinterSet set) {
-//        overlayHeight = 85;
-//        overlayX = (width - overlayWidth) / 2;
-//        overlayY = (height - overlayHeight) / 2;
-//        activeOverlay = Overlay.RENAME;
-//        this.overlayTargetSet = set;
-//
-//        if (confirmButton != null) buttons.remove(confirmButton);
-//
-//        int inputWidth = 130;
-//        int inputHeight = 16;
-//        int inputX = (width - inputWidth) / 2;
-//        int inputY = overlayY + 32;
-//
-//        createNameField = new TextFieldWidget(textRenderer, inputX, inputY, inputWidth, inputHeight, new LiteralText(""));
-//        createNameField.setMaxLength(20);
-//        createNameField.setFocusUnlocked(true);
-//        children.add(createNameField);
-//
-//        int confirmWidth = 60;
-//        int confirmHeight = 20;
-//        int confirmX = (width - confirmWidth) / 2; // centered
-//        int confirmY = inputY + inputHeight + 8;
-//
-//        confirmButton = new ButtonWidget(confirmX, confirmY, confirmWidth, confirmHeight,
-//                new LiteralText("CONFIRM"),
-//                button-> {
-//                    if (createNameField == null) return;
-//                    String name = createNameField.getText().trim();
-//                    if(!name.isEmpty()) {
-//                        set.renameSet(name);
-//                        closeOverlay();
-//                    }
-//                }
-//        );
-//        addButton(confirmButton);
-//    }
-//
-//    private void openClearOverlay(SplinterSet set) {
-//        overlayX = (width - overlayWidth) / 2;
-//        overlayY = (height - overlayHeight) / 2;
-//        activeOverlay = Overlay.CLEAR;
-//
-//        if (confirmButton != null) buttons.remove(confirmButton);
-//
-//        int confirmWidth = 60;
-//        int confirmHeight = 20;
-//        int confirmX = (width - confirmWidth) / 2; // centered
-//        int confirmY = overlayY + 32;
-//
-//        confirmButton = new ButtonWidget(confirmX, confirmY, confirmWidth, confirmHeight,
-//                new LiteralText("CONFIRM"),
-//                button-> {
-//                    set.clearSet();
-//                    closeOverlay();
-//                }
-//        );
-//        addButton(confirmButton);
-//    }
-//
-//    private void closeOverlay() {
-//        overlayHeight = 65; // for now hardcode this, later make it dynamic
-//        activeOverlay = Overlay.NONE;
-//        this.overlayTargetSet = null;
-//        if (createNameField != null) {
-//            children.remove(createNameField);
-//            createNameField = null;
-//        }
-//        // clear confirm button and re-add real buttons
-//        confirmButton = null;
-//        buttons.clear();
-//        children.clear();
-//        init();
-//    }
 
     public static void toggle() {
         MinecraftClient client = MinecraftClient.getInstance();

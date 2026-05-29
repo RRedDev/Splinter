@@ -4,6 +4,7 @@ import java.awt.*;
 
 public class SplinterColors {
     // raw Splinter palette
+    public static int WHITE = 0xFFFFFF;
     public static int LIGHT = 0xFFC5D8E0;
     public static int MID_LIGHT = 0xFF7B8FC0;
     public static int MID = 0xFF5E6FAD;
@@ -18,7 +19,9 @@ public class SplinterColors {
     public static int BORDER_HOVER = LIGHT;
     public static int FILL = MID;
     public static int PANEL_BG = DEEP;
-    public static int TEXT = LIGHT;
+    public static int TEXT = WHITE;
+    public static int SUB_TEXT = LIGHT;
+
 
     public static int alpha(int color, int alpha) {
         // alpha will be of the form 0xFF or 0xCC
